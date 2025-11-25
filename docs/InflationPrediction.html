@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مدل ریاضی پیش‌بینی تورم ناشی از قیمت‌گذاری پلکانی بنزین (IBT)</title>
+
+    <!-- Social Media Preview Tags (Twitter & Open Graph) -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="مدل ریاضی تورم سوخت - قیمت‌گذاری پلکانی (IBT)">
+    <meta name="twitter:description"
+        content="شبیه‌سازی اثر تورمی سناریوی سه نرخی بنزین (۱۵۰۰/۳۰۰۰/۵۰۰۰ تومان) بر اساس توزیع مصرف در جامعه.">
+    <meta name="twitter:image" content="https://placehold.co/600x400/8b5cf6/ffffff?text=IBT+Inflation+Model">
+    <meta property="og:title" content="مدل ریاضی تورم سوخت - قیمت‌گذاری پلکانی (IBT)">
+    <meta property="og:description"
+        content="شبیه‌سازی اثر تورمی سناریوی سه نرخی بنزین (۱۵۰۰/۳۰۰۰/۵۰۰۰ تومان) بر اساس توزیع مصرف در جامعه.">
+    <meta property="og:image" content="https://placehold.co/600x400/8b5cf6/ffffff?text=IBT+Inflation+Model">
+    <meta property="og:type" content="website">
+
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Prop-types (Required for Recharts UMD) -->
+    <script src="https://unpkg.com/prop-types/prop-types.min.js"></script>
+    <!-- Recharts -->
+    <script src="https://unpkg.com/recharts@2.10.3/umd/Recharts.js"></script>
+
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet"
+        type="text/css" />
+    <style>
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useMemo } = React;
+        const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } = Recharts;
+
+        // تابع تولید اعداد با توزیع نرمال (Box-Muller)
+        // برای شبیه‌سازی توزیع واقعی مصرف در جامعه
+        let spareRandom = null;
+        const randn_bm = (mean, stddev) => {
+            let val;
+            if (spareRandom !== null) {
+                val = spareRandom;
+                spareRandom = null;
+            } else {
+                let u, v, s;
+                do {
+                    u = Math.random() * 2 - 1;
+                    v = Math.random() * 2 - 1;
+                    s = u * u + v * v;
+                } while (s >= 1 || s === 0);
+
+                const multiplier = Math.sqrt(-2 * Math.log(s) / s);
+                spareRandom = v * multiplier * stddev + mean;
+                val = u * multiplier * stddev + mean;
+            }
+            // مصرف نمی‌تواند منفی باشد
+            return Math.max(0, val);
+        };
+
+        // توابع قیمت‌گذاری بر اساس سناریو کاربر
+        const PRICE_P1 = 1500; // 0-60L
+        const PRICE_P2 = 3000; // 60-160L
+        const PRICE_P3 = 5000; // >160L
+
+        // هزینه در سیستم جدید (سه نرخی)
+        const costNew = (x) => {
+            if (x <= 60) return PRICE_P1 * x;
+            if (x <= 160) return (PRICE_P1 * 60) + (PRICE_P2 * (x - 60));
+            // مازاد بر 160 لیتر با 5000 تومان محاسبه می‌شود
+            return (PRICE_P1 * 60) + (PRICE_P2 * 100) + (PRICE_P3 * (x - 160));
+        };
+
+        // هزینه در سیستم قدیم (دو نرخی) - مفروض است 60 لیتر 1500، مابقی 3000
+        const costOld = (x) => {
+            if (x <= 60) return PRICE_P1 * x;
+            return (PRICE_P1 * 60) + (PRICE_P2 * (x - 60));
+        };
+
+        const App = () => {
+            // متغیرهای ورودی کلیدی
+            const [numVehicles, setNumVehicles] = useState(22); // میلیون خودرو
+            const [avgConsumption, setAvgConsumption] = useState(85); // میانگین مصرف ماهانه (لیتر)
+            const [stdDev, setStdDev] = useState(30); // انحراف معیار مصرف (لیتر)
+            const [alpha, setAlpha] = useState(0.25); // ضریب کشش تورم (0.25 یعنی 10% افزایش WAP منجر به 2.5% تورم CPI می‌شود)
+            const [psychologicalShock, setPsychologicalShock] = useState(0.8); // شوک روانی (0.8 یعنی 0.8% تورم ثابت)
+
+            // محاسبات اصلی و مدل‌سازی آماری
+            const modelResults = useMemo(() => {
+                const SIMULATION_SIZE = 10000;
+                let totalCostOld = 0;
+                let totalCostNew = 0;
+
+                let segmentCounts = { P1: 0, P2: 0, P3: 0 }; // 0-60, 60-160, >160
+
+                // شبیه‌سازی 10,000 مصرف‌کننده
+                for (let i = 0; i < SIMULATION_SIZE; i++) {
+                    const consumption = randn_bm(avgConsumption, stdDev);
+
+                    totalCostOld += costOld(consumption);
+                    totalCostNew += costNew(consumption);
+
+                    // تعیین سگمنت برای نمودار توزیع
+                    if (consumption <= 60) segmentCounts.P1++;
+                    else if (consumption <= 160) segmentCounts.P2++;
+                    else segmentCounts.P3++;
+                }
+
+                // مقیاس‌بندی نتایج به کل جامعه
+                const scalingFactor = numVehicles * 1000000 / SIMULATION_SIZE;
+
+                const totalExtraRevenue = (totalCostNew - totalCostOld) * scalingFactor; // تومان در ماه
+                const totalCostOldSociety = totalCostOld * scalingFactor;
+
+                // محاسبه میانگین وزنی قیمت (Weighted Average Price - WAP)
+                const totalConsumption = avgConsumption * numVehicles * 1000000; // مصرف کل ماهانه (لیتر)
+                const WAP_old = totalCostOldSociety / totalConsumption;
+                // WAP جدید باید کل هزینه جدید جامعه را بر کل مصرف تقسیم کند
+                const WAP_new = (totalCostOldSociety + totalExtraRevenue) / totalConsumption;
+
+                // درصد افزایش میانگین قیمت وزنی (WAP Change)
+                const WAP_change_percent = (totalExtraRevenue / totalCostOldSociety) * 100;
+
+                // محاسبه تورم ناشی از افزایش هزینه (Cost-Push Inflation)
+                const costPushInflation = WAP_change_percent * alpha;
+
+                // تورم کل (اثر هزینه + شوک روانی)
+                const totalInflation = costPushInflation + psychologicalShock;
+
+                // داده‌های نمودار توزیع
+                const distributionData = [
+                    { name: `کم‌مصرف (۰ تا ۶۰L)`, count: segmentCounts.P1, percent: (segmentCounts.P1 / SIMULATION_SIZE) * 100, color: '#3b82f6' },
+                    { name: `مصرف متوسط (۶۰ تا ۱۶۰L)`, count: segmentCounts.P2, percent: (segmentCounts.P2 / SIMULATION_SIZE) * 100, color: '#22c55e' },
+                    { name: `پرمصرف (> ۱۶۰L)`, count: segmentCounts.P3, percent: (segmentCounts.P3 / SIMULATION_SIZE) * 100, color: '#ef4444' },
+                ];
+
+                return {
+                    WAP_change_percent,
+                    totalExtraRevenue,
+                    costPushInflation,
+                    totalInflation,
+                    distributionData,
+                    WAP_old,
+                    WAP_new,
+                    segmentP3Count: segmentCounts.P3,
+                };
+            }, [numVehicles, avgConsumption, stdDev, alpha, psychologicalShock]);
+
+            // فرمت کردن اعداد
+            const formatNumber = (num, decimals = 0) => new Intl.NumberFormat('fa-IR', { maximumFractionDigits: decimals, minimumFractionDigits: decimals }).format(num);
+
+            return (
+                <div className="min-h-screen p-4 md:p-8">
+                    <header className="mb-8 text-center">
+                        <h1 className="text-3xl font-bold text-gray-800 mb-2">مدل‌سازی اثر تورمی قیمت‌گذاری پلکانی بنزین (۱۵۰۰/۳۰۰۰/۵۰۰۰)</h1>
+                        <p className="text-gray-600">تحلیل اقتصادی و شبیه‌سازی توزیع مصرف برای پیش‌بینی تورم (IBT)</p>
+                    </header>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                        {/* پنل تنظیمات ورودی */}
+                        <div className="card lg:col-span-1 space-y-4 border-r-4 border-purple-500">
+                            <h2 className="text-xl font-bold text-gray-700 border-b pb-2">۱. متغیرهای مدل‌سازی</h2>
+
+                            <div>
+                                <label className="block text-sm text-gray-600 mb-1">تعداد کل خودروها (میلیون):</label>
+                                <input type="number" step="0.1" value={numVehicles} onChange={e => setNumVehicles(Number(e.target.value))} className="w-full p-2 border rounded bg-gray-50 text-left ltr" dir="ltr" />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm text-gray-600 mb-1">میانگین مصرف ماهانه (لیتر):</label>
+                                <input type="number" step="1" value={avgConsumption} onChange={e => setAvgConsumption(Number(e.target.value))} className="w-full p-2 border rounded bg-gray-50 text-left ltr" dir="ltr" />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm text-gray-600 mb-1">انحراف معیار مصرف (لیتر):</label>
+                                <input type="number" step="1" value={stdDev} onChange={e => setStdDev(Number(e.target.value))} className="w-full p-2 border rounded bg-gray-50 text-left ltr" dir="ltr" />
+                            </div>
+
+                            <h3 className="text-lg font-bold text-gray-700 pt-4 border-t mt-4">ضریب تورم</h3>
+                            <div>
+                                <label className="block text-sm text-gray-600 mb-1">ضریب کشش تورم (α):</label>
+                                <input type="number" step="0.01" value={alpha} onChange={e => setAlpha(Number(e.target.value))} className="w-full p-2 border rounded bg-gray-50 text-left ltr" dir="ltr" />
+                                <p className="text-xs text-gray-500 mt-1">هر ۱٪ افزایش WAP، منجر به {formatNumber(alpha * 10, 1)}٪ تورم کل می‌شود.</p>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm text-gray-600 mb-1">شوک روانی ثابت (درصد):</label>
+                                <input type="number" step="0.1" value={psychologicalShock} onChange={e => setPsychologicalShock(Number(e.target.value))} className="w-full p-2 border rounded bg-gray-50 text-left ltr" dir="ltr" />
+                                <p className="text-xs text-gray-500 mt-1">اثر انتظارات تورمی ناشی از عدد ۵۰۰۰ تومان.</p>
+                            </div>
+                        </div>
+
+                        {/* پنل نتایج کلان */}
+                        <div className="card lg:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="col-span-full">
+                                <h2 className="text-xl font-bold text-gray-700 border-b pb-2 mb-4">۲. نتایج کلان و تورمی</h2>
+                            </div>
+
+                            {/* نتیجه ۱: افزایش قیمت وزنی */}
+                            <div className="bg-red-50 p-4 rounded-lg border border-red-100">
+                                <p className="text-sm text-red-600 mb-1">درصد افزایش میانگین قیمت وزنی (WAP)</p>
+                                <p className="text-4xl font-bold text-red-800">{formatNumber(modelResults.WAP_change_percent, 2)}%</p>
+                                <p className="text-xs text-gray-500 mt-1">تغییر واقعی قیمت سوخت در سبد مصرفی جامعه</p>
+                            </div>
+
+                            {/* نتیجه ۲: تورم ناشی از هزینه */}
+                            <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-100">
+                                <p className="text-sm text-yellow-600 mb-1">تورم ناشی از فشار هزینه (Cost-Push)</p>
+                                <p className="text-4xl font-bold text-yellow-800">{formatNumber(modelResults.costPushInflation, 2)}%</p>
+                                <p className="text-xs text-gray-500 mt-1">بر اساس ضریب کشش ({formatNumber(alpha, 2)})</p>
+                            </div>
+
+                            {/* نتیجه ۳: تورم کل پیش‌بینی شده */}
+                            <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
+                                <p className="text-sm text-purple-600 mb-1">تخمین تورم نهایی (CPI)</p>
+                                <p className="text-4xl font-bold text-purple-800">{formatNumber(modelResults.totalInflation, 2)}%</p>
+                                <p className="text-xs text-gray-500 mt-1">شامل اثر هزینه و شوک روانی ({formatNumber(psychologicalShock, 1)}%)</p>
+                            </div>
+
+                            {/* نتیجه ۴: درآمد مازاد دولت (ماهانه) */}
+                            <div className="bg-green-50 p-4 rounded-lg border border-green-100 md:col-span-3">
+                                <p className="text-sm text-green-600 mb-1">درآمد مازاد ماهانه دولت از این طرح</p>
+                                <p className="text-3xl font-bold text-green-800">
+                                    {formatNumber(modelResults.totalExtraRevenue / 1000000000000, 2)}
+                                    <span className="text-xl font-normal"> هزار میلیارد تومان</span>
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">این مبلغ فقط ناشی از افزایش قیمت در پله سوم است.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* بخش تحلیل توزیع مصرف */}
+                    <div className="card border-t-4 border-blue-500 mb-8">
+                        <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 11h9.055M12 11L12 2.055M12 11v9.055" /></svg>
+                            ۳. توزیع جامعه بر اساس پله‌های مصرف (شبیه‌سازی)
+                        </h3>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="h-72 w-full" dir="ltr">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={modelResults.distributionData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis type="number" dataKey="percent" tickFormatter={(value) => `${formatNumber(value, 1)}%`} />
+                                        <YAxis dataKey="name" type="category" width={150} style={{ fontSize: '12px' }} />
+                                        <Tooltip formatter={(value, name, props) => [`${formatNumber(props.payload.percent, 2)}%`, name]} />
+                                        <Legend wrapperStyle={{ direction: 'rtl' }} />
+                                        <Bar dataKey="percent" name="درصد خودروها" fill="#8b5cf6" label={{ position: 'right' }} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div className="p-4 bg-red-100 rounded border border-red-300">
+                                    <p className="text-sm font-bold text-red-800 mb-2">خودروهای پرمصرف (پله ۵۰۰۰ تومانی)</p>
+                                    <p className="text-3xl font-bold text-red-800">
+                                        {formatNumber(modelResults.segmentP3Count / 10000 * numVehicles, 2)}
+                                        <span className="text-xl font-normal"> میلیون خودرو</span>
+                                    </p>
+                                    <p className="text-xs text-gray-700 mt-2">
+                                        این تعداد خودرو (<span className="font-bold">{formatNumber(modelResults.distributionData[2].percent, 1)}%</span> از جامعه) بار اصلی افزایش هزینه را به دوش می‌کشند.
+                                    </p>
+                                </div>
+                                <div className="p-4 bg-blue-100 rounded border border-blue-300">
+                                    <p className="text-sm font-bold text-blue-800 mb-2">خودروهای بدون تغییر قیمت</p>
+                                    <p className="text-3xl font-bold text-blue-800">
+                                        {formatNumber((modelResults.distributionData[0].percent + modelResults.distributionData[1].percent), 1)}%
+                                    </p>
+                                    <p className="text-xs text-gray-700 mt-2">
+                                        این درصد از جامعه (زیر ۱۶۰ لیتر) هیچ افزایش هزینه مستقیمی در قبوض سوخت خود نخواهند داشت.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <footer className="text-center text-gray-500 text-sm mt-8">
+                        <p>مدل‌سازی بر اساس توزیع نرمال شبیه‌سازی شده ۱۰,۰۰۰ مصرف‌کننده. ضریب تورم و شوک روانی بر اساس مفروضات ورودی تنظیم می‌شوند.</p>
+                    </footer>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+
+</html>
