@@ -1,0 +1,9 @@
+{
+  "title": "Iran Open Economy Dashboard",
+  "subsidy_calculator": {
+    "title": "Subsidy Calculator",
+    "rent_amount": "Rent Amount:",
+    "calculate_subsidy": "Calculate Subsidy",
+    "estimated_subsidy": "Your estimated subsidy is: "
+  }
+}
