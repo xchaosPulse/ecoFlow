@@ -1,35 +1,32 @@
-name: Build and Deploy to docs/app
+name: Update Data
 
 on:
-  push:
-    branches:
-      - main
+  schedule:
+    - cron: '0 0 * * *' # Runs every day at midnight
+  workflow_dispatch: # Allows manual triggering
 
 jobs:
-  build_and_deploy:
+  update_data:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - name: Setup Python
+        uses: actions/setup-python@v4
         with:
-          node-version: '18'
+          python-version: '3.x'
 
-      - name: Install dependencies and build
-        run: |
-          cd app
-          npm install
-          npm run build
+      - name: Install dependencies
+        run: pip install -r scripts/requirements.txt
 
-      - name: Deploy to docs/app
+      - name: Run scraper
+        run: python scripts/scraper.py
+
+      - name: Commit and push changes
         run: |
-          rm -rf docs/app
-          mkdir -p docs
-          mv app/build docs/app
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add docs/app
-          git commit -m 'Deploy React app to docs/app' || echo "No changes to commit"
+          git add app/src/data/
+          git commit -m 'Update data sources' || echo "No changes to commit"
           git push
