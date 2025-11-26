@@ -15,7 +15,7 @@ def scrape_world_bank_data():
     # This is a placeholder and will need to be updated with the correct selectors
     data = {"gdp": "some value", "population": "some value"}
 
-    with open("data/world_bank_data.json", "w") as f:
+    with open("app/src/data/world_bank_data.json", "w") as f:
         json.dump(data, f)
 
 if __name__ == "__main__":
