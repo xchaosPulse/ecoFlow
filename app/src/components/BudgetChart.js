@@ -1,7 +1,7 @@
 import React from 'react';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Pie } from 'react-chartjs-2';
-import budgetData from '../../data/budget1403.json';
+import budgetData from '../data/budget1403.json';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 

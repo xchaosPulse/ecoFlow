@@ -1,0 +1,14 @@
+{
+  "year": 1403,
+  "revenue": {
+    "total": 1000,
+    "oil": 400,
+    "tax": 500,
+    "other": 100
+  },
+  "expenditure": {
+    "total": 950,
+    "current": 700,
+    "development": 250
+  }
+}
