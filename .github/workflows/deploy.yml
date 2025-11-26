@@ -1,0 +1,35 @@
+name: Build and Deploy to docs/app
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies and build
+        run: |
+          cd app
+          npm install
+          npm run build
+
+      - name: Deploy to docs/app
+        run: |
+          rm -rf docs/app
+          mkdir -p docs
+          mv app/build docs/app
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add docs/app
+          git commit -m 'Deploy React app to docs/app' || echo "No changes to commit"
+          git push
