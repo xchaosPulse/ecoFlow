@@ -1,7 +1,7 @@
 {
   "name": "iran-open-economy-dashboard",
   "version": "0.1.0",
-  "homepage": "./app",
+  "homepage": ".",
   "private": true,
   "dependencies": {
     "react": "^18.2.0",

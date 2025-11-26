@@ -1,12 +1,12 @@
-name: Update Data
+name: Build and Deploy
 
 on:
-  schedule:
-    - cron: '0 0 * * *' # Runs every day at midnight
-  workflow_dispatch: # Allows manual triggering
+  push:
+    branches:
+      - main
 
 jobs:
-  update_data:
+  build_and_deploy:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -14,21 +14,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
-          python-version: '3.x'
+          node-version: '18'
 
-      - name: Install dependencies
-        run: pip install -r scripts/requirements.txt
-
-      - name: Run scraper
-        run: python scripts/scraper.py
-
-      - name: Commit and push changes
+      - name: Install dependencies and build
         run: |
+          cd app
+          npm install
+          npm run build
+
+      - name: Deploy to docs
+        run: |
+          rm -rf docs
+          mv app/build docs
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add app/src/data/
-          git commit -m 'Update data sources' || echo "No changes to commit"
+          git add docs
+          git commit -m 'Deploy app to docs' || echo "No changes to commit"
           git push
