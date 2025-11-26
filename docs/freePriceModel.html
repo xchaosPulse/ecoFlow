@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مدل ریاضی آزادسازی نرخ بنزین ۱۴۰۴-۱۴۰۵</title>
+
+    <!-- Social Media Preview Tags (Twitter & Open Graph) -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="مدل ریاضی آزادسازی نرخ بنزین ۱۴۰۴-۱۴۰۵">
+    <meta name="twitter:description" content="شبیه‌سازی تعاملی حذف یارانه بنزین و توزیع عادلانه منابع بین مردم. نتایج را در این داشبورد ببینید.">
+    <meta name="twitter:image" content="https://placehold.co/600x400/3b82f6/ffffff?text=Benzin+Model+Analytics">
+
+    <meta property="og:title" content="مدل ریاضی آزادسازی نرخ بنزین ۱۴۰۴-۱۴۰۵">
+    <meta property="og:description" content="شبیه‌سازی تعاملی حذف یارانه بنزین و توزیع عادلانه منابع بین مردم. نتایج را در این داشبورد ببینید.">
+    <meta property="og:image" content="https://placehold.co/600x400/3b82f6/ffffff?text=Benzin+Model+Analytics">
+    <meta property="og:type" content="website">
+
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Prop-types (Required for Recharts UMD) -->
+    <script src="https://unpkg.com/prop-types/prop-types.min.js"></script>
+    <!-- Recharts -->
+    <script src="https://unpkg.com/recharts@2.10.3/umd/Recharts.js"></script>
+    
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+    <style>
+        body { font-family: 'Vazirmatn', sans-serif; background-color: #f3f4f6; }
+        .card { background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); padding: 1.5rem; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useMemo } = React;
+        const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } = Recharts;
+
+        const App = () => {
+            // مقادیر اولیه بر اساس داده‌های کاربر (نوامبر ۲۰۲۵)
+            const [basePrice, setBasePrice] = useState(3000);
+            const [targetPrice, setTargetPrice] = useState(39000);
+            const [dailyConsumption, setDailyConsumption] = useState(135); // میلیون لیتر
+            const [population, setPopulation] = useState(92.42); // میلیون نفر
+            const [familySize, setFamilySize] = useState(4);
+            const [exchangeRate, setExchangeRate] = useState(113000); // تومان
+
+            // محاسبات اصلی
+            const calculations = useMemo(() => {
+                const yearlyConsumptionLitres = dailyConsumption * 1000000 * 365;
+                const priceDiff = targetPrice - basePrice;
+                const totalRevenue = priceDiff * yearlyConsumptionLitres; // تومان
+                
+                const totalRevenueInBillions = totalRevenue / 1000000000; // میلیارد تومان
+                const totalRevenueInHemat = totalRevenueInBillions / 1000; // همت
+
+                const perPersonYearly = totalRevenue / (population * 1000000);
+                const perPersonMonthly = perPersonYearly / 12;
+
+                // داده‌های نمودار ۱۲ ماهه
+                const chartData = [];
+                let cumulativeRevenue = 0;
+                
+                for (let month = 0; month <= 12; month++) {
+                    const currentPrice = basePrice + (priceDiff * (month / 12));
+                    const monthlyRevenue = (currentPrice - basePrice) * (dailyConsumption * 1000000 * 30.4); // درآمد این ماه خاص
+                    cumulativeRevenue += monthlyRevenue / 1000000000; // تبدیل به میلیارد تومان برای نمودار تجمعی
+
+                    chartData.push({
+                        name: month === 0 ? 'شروع' : `ماه ${month}`,
+                        قیمت: Math.round(currentPrice),
+                        درآمد_تجمعی: Math.round(cumulativeRevenue),
+                        یارانه_آزاد_شده: Math.round((currentPrice - basePrice))
+                    });
+                }
+
+                return {
+                    totalRevenueInHemat,
+                    perPersonMonthly,
+                    perPersonYearly,
+                    chartData,
+                    priceDiff
+                };
+            }, [basePrice, targetPrice, dailyConsumption, population]);
+
+            // فرمت کردن اعداد
+            const formatNumber = (num) => new Intl.NumberFormat('fa-IR').format(Math.round(num));
+
+            return (
+                <div className="min-h-screen p-4 md:p-8">
+                    <header className="mb-8 text-center">
+                        <h1 className="text-3xl font-bold text-gray-800 mb-2">مدل جامع آزادسازی نرخ بنزین (۱۴۰۴-۱۴۰۵)</h1>
+                        <p className="text-gray-600">شبیه‌سازی حذف رانت انرژی و توزیع عادلانه یارانه</p>
+                    </header>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                        {/* پنل تنظیمات ورودی */}
+                        <div className="card lg:col-span-1 space-y-4 border-r-4 border-blue-500">
+                            <h2 className="text-xl font-bold text-gray-700 border-b pb-2">۱. متغیرهای کلیدی</h2>
+                            
+                            <div>
+                                <label className="block text-sm text-gray-600 mb-1">قیمت فعلی (تومان):</label>
+                                <input type="number" value={basePrice} onChange={e => setBasePrice(Number(e.target.value))} className="w-full p-2 border rounded bg-gray-50 text-left ltr" dir="ltr" />
+                            </div>
+                            
+                            <div>
+                                <label className="block text-sm text-gray-600 mb-1">قیمت هدف/واقعی (تومان):</label>
+                                <input type="number" value={targetPrice} onChange={e => setTargetPrice(Number(e.target.value))} className="w-full p-2 border rounded bg-gray-50 text-left ltr" dir="ltr" />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm text-gray-600 mb-1">مصرف روزانه (میلیون لیتر):</label>
+                                <input type="number" value={dailyConsumption} onChange={e => setDailyConsumption(Number(e.target.value))} className="w-full p-2 border rounded bg-gray-50 text-left ltr" dir="ltr" />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm text-gray-600 mb-1">جمعیت کشور (میلیون نفر):</label>
+                                <input type="number" value={population} onChange={e => setPopulation(Number(e.target.value))} className="w-full p-2 border rounded bg-gray-50 text-left ltr" dir="ltr" />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm text-gray-600 mb-1">بعد خانوار (تعداد نفرات):</label>
+                                <input type="range" min="1" max="10" value={familySize} onChange={e => setFamilySize(Number(e.target.value))} className="w-full" />
+                                <div className="text-center font-bold text-blue-600">{formatNumber(familySize)} نفر</div>
+                            </div>
+                        </div>
+
+                        {/* پنل نتایج کلان */}
+                        <div className="card lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                             <div className="col-span-1 md:col-span-2">
+                                <h2 className="text-xl font-bold text-gray-700 border-b pb-2 mb-4">۲. نتایج کلان اقتصادی (یک ساله)</h2>
+                             </div>
+                            
+                            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                                <p className="text-sm text-blue-600 mb-1">کل منابع آزاد شده (سالانه)</p>
+                                <p className="text-3xl font-bold text-blue-800">{formatNumber(calculations.totalRevenueInHemat)} <span className="text-lg font-normal">همت</span></p>
+                                <p className="text-xs text-gray-500 mt-1">معادل {formatNumber(calculations.totalRevenueInHemat * 1000 / exchangeRate)} میلیارد دلار</p>
+                            </div>
+
+                            <div className="bg-green-50 p-4 rounded-lg border border-green-100">
+                                <p className="text-sm text-green-600 mb-1">یارانه پنهان حذف شده (هر لیتر)</p>
+                                <p className="text-3xl font-bold text-green-800">{formatNumber(calculations.priceDiff)} <span className="text-lg font-normal">تومان</span></p>
+                                <p className="text-xs text-gray-500 mt-1">تفاوت قیمت جهانی و فعلی</p>
+                            </div>
+
+                            <div className="bg-purple-50 p-4 rounded-lg border border-purple-100 col-span-1 md:col-span-2">
+                                <p className="text-sm text-purple-600 mb-1">دریافتی ماهانه هر فرد (نقدی + سهم انرژی)</p>
+                                <div className="flex items-end gap-2">
+                                    <p className="text-4xl font-bold text-purple-800">{formatNumber(calculations.perPersonMonthly)}</p>
+                                    <span className="text-xl text-purple-600 mb-1">تومان</span>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4 mt-3 text-sm">
+                                    <div className="bg-white p-2 rounded text-center shadow-sm">
+                                        <span className="block text-gray-500">سهم نقدی (۵۰٪)</span>
+                                        <span className="font-bold text-purple-700">{formatNumber(calculations.perPersonMonthly / 2)} تومان</span>
+                                    </div>
+                                    <div className="bg-white p-2 rounded text-center shadow-sm">
+                                        <span className="block text-gray-500">سهم انرژی (۵۰٪)</span>
+                                        <span className="font-bold text-purple-700">{formatNumber(calculations.perPersonMonthly / 2)} تومان</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* بخش تحلیل خانوار */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                        <div className="card border-t-4 border-indigo-500">
+                            <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                                وضعیت خانوار شما ({familySize} نفره)
+                            </h3>
+                            
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                                    <span className="text-gray-700">دریافتی کل ماهانه خانوار:</span>
+                                    <span className="text-xl font-bold text-indigo-700">{formatNumber(calculations.perPersonMonthly * familySize)} تومان</span>
+                                </div>
+                                <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                                    <span className="text-gray-700">دریافتی کل سالانه خانوار:</span>
+                                    <span className="text-xl font-bold text-indigo-700">{formatNumber(calculations.perPersonYearly * familySize)} تومان</span>
+                                </div>
+                                
+                                <div className="mt-4 p-4 bg-yellow-50 rounded border border-yellow-200">
+                                    <h4 className="font-bold text-yellow-800 mb-2">تحلیل عدالت اجتماعی (خانوار بدون خودرو):</h4>
+                                    <p className="text-sm text-yellow-900 leading-relaxed text-justify">
+                                        این خانوار قبلاً از یارانه بنزین بهره مستقیم نمی‌برد، اما هزینه تورم آن را پرداخت می‌کرد. 
+                                        اکنون ماهانه <span className="font-bold">{formatNumber(calculations.perPersonMonthly * familySize)} تومان</span> دریافت می‌کند. 
+                                        حتی با فرض افزایش ۳۰ درصدی کرایه حمل‌ونقل عمومی، این مبلغ چندین برابر هزینه اضافی را پوشش می‌دهد و قدرت خرید خانوار را افزایش می‌دهد.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="card">
+                            <h3 className="text-lg font-bold text-gray-800 mb-4">روند افزایش قیمت در ۱۲ ماه</h3>
+                            <div className="h-64 w-full" dir="ltr">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <LineChart data={calculations.chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                                        <CartesianGrid stroke="#eee" strokeDasharray="5 5" />
+                                        <XAxis dataKey="name" />
+                                        <YAxis />
+                                        <Tooltip formatter={(value) => formatNumber(value) + ' تومان'} />
+                                        <Legend />
+                                        <Line type="monotone" dataKey="قیمت" stroke="#ef4444" name="قیمت بنزین (تومان)" strokeWidth={3} />
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* نمودار تجمعی */}
+                    <div className="card mb-8">
+                        <h3 className="text-lg font-bold text-gray-800 mb-4">انباشت منابع مالی جهت توزیع (میلیارد تومان)</h3>
+                        <div className="h-72 w-full" dir="ltr">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={calculations.chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                                    <defs>
+                                        <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                                        </linearGradient>
+                                    </defs>
+                                    <XAxis dataKey="name" />
+                                    <YAxis />
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <Tooltip formatter={(value) => formatNumber(value) + ' میلیارد تومان'} />
+                                    <Area type="monotone" dataKey="درآمد_تجمعی" stroke="#3b82f6" fillOpacity={1} fill="url(#colorRevenue)" name="منابع آزاد شده تجمعی" />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    <footer className="text-center text-gray-500 text-sm mt-8">
+                        <p>مدل‌سازی بر اساس داده‌های نوامبر ۲۰۲۵ | طراحی شده جهت بررسی اثرات حذف یارانه انرژی</p>
+                    </footer>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

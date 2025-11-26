@@ -1,250 +1,465 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مدل ریاضی آزادسازی نرخ بنزین ۱۴۰۴-۱۴۰۵</title>
+    <title>ecoFlow - داشبورد تعاملی اقتصاد شفاف ایران</title>
 
     <!-- Social Media Preview Tags (Twitter & Open Graph) -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="مدل ریاضی آزادسازی نرخ بنزین ۱۴۰۴-۱۴۰۵">
-    <meta name="twitter:description" content="شبیه‌سازی تعاملی حذف یارانه بنزین و توزیع عادلانه منابع بین مردم. نتایج را در این داشبورد ببینید.">
-    <meta name="twitter:image" content="https://placehold.co/600x400/3b82f6/ffffff?text=Benzin+Model+Analytics">
+    <meta name="twitter:title" content="ecoFlow - داشبورد تعاملی اقتصاد شفاف ایران">
+    <meta name="twitter:description"
+        content="پلتفرمی تعاملی برای شفاف‌سازی چرخه اقتصادی، نمایش بصری جریان پول و تحلیل تصمیم‌گیری‌های کلان اقتصادی ایران.">
+    <meta name="twitter:image" content="https://placehold.co/600x400/0f766e/ffffff?text=ecoFlow+Dashboard">
 
-    <meta property="og:title" content="مدل ریاضی آزادسازی نرخ بنزین ۱۴۰۴-۱۴۰۵">
-    <meta property="og:description" content="شبیه‌سازی تعاملی حذف یارانه بنزین و توزیع عادلانه منابع بین مردم. نتایج را در این داشبورد ببینید.">
-    <meta property="og:image" content="https://placehold.co/600x400/3b82f6/ffffff?text=Benzin+Model+Analytics">
+    <meta property="og:title" content="ecoFlow - داشبورد تعاملی اقتصاد شفاف ایران">
+    <meta property="og:description"
+        content="پلتفرمی تعاملی برای شفاف‌سازی چرخه اقتصادی، نمایش بصری جریان پول و تحلیل تصمیم‌گیری‌های کلان اقتصادی ایران.">
+    <meta property="og:image" content="https://placehold.co/600x400/0f766e/ffffff?text=ecoFlow+Dashboard">
     <meta property="og:type" content="website">
+    <meta property="og:url" content="https://xchaosPulse.github.io/ecoFlow/">
 
-    <!-- React & ReactDOM -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <!-- Babel for JSX -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Prop-types (Required for Recharts UMD) -->
-    <script src="https://unpkg.com/prop-types/prop-types.min.js"></script>
-    <!-- Recharts -->
-    <script src="https://unpkg.com/recharts@2.10.3/umd/Recharts.js"></script>
-    
-    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+    <!-- Font: Vazirmatn (Persian) -->
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet"
+        type="text/css" />
+
     <style>
-        body { font-family: 'Vazirmatn', sans-serif; background-color: #f3f4f6; }
-        .card { background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); padding: 1.5rem; }
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background: linear-gradient(135deg, #0f766e 0%, #164e63 100%);
+            color: #f0f9ff;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #06b6d4, #0ea5e9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .card-hover {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #06b6d4, #0ea5e9);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        a {
+            color: #06b6d4;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        a:hover {
+            color: #0ea5e9;
+        }
     </style>
 </head>
-<body>
-    <div id="root"></div>
 
-    <script type="text/babel">
-        const { useState, useMemo } = React;
-        const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } = Recharts;
+<body class="min-h-screen">
+    <!-- Header -->
+    <header class="border-b border-teal-700/30 backdrop-blur-sm">
+        <div class="container mx-auto px-4 py-8">
+            <div class="text-center mb-4">
+                <h1 class="text-5xl font-bold mb-2">
+                    <span class="gradient-text">ecoFlow</span>
+                </h1>
+                <p class="text-xl text-teal-100">داشبورد تعاملی اقتصاد شفاف ایران</p>
+            </div>
+            <p class="text-center text-teal-100 max-w-2xl mx-auto">
+                پلتفرمی متن‌باز و تعاملی برای شفاف‌سازی چرخه اقتصادی، نمایش بصری جریان پول، و تحلیل تأثیر تصمیم‌گیری‌های
+                کلان اقتصادی بر معیشت مردم
+            </p>
+        </div>
+    </header>
 
-        const App = () => {
-            // مقادیر اولیه بر اساس داده‌های کاربر (نوامبر ۲۰۲۵)
-            const [basePrice, setBasePrice] = useState(3000);
-            const [targetPrice, setTargetPrice] = useState(39000);
-            const [dailyConsumption, setDailyConsumption] = useState(135); // میلیون لیتر
-            const [population, setPopulation] = useState(92.42); // میلیون نفر
-            const [familySize, setFamilySize] = useState(4);
-            const [exchangeRate, setExchangeRate] = useState(113000); // تومان
-
-            // محاسبات اصلی
-            const calculations = useMemo(() => {
-                const yearlyConsumptionLitres = dailyConsumption * 1000000 * 365;
-                const priceDiff = targetPrice - basePrice;
-                const totalRevenue = priceDiff * yearlyConsumptionLitres; // تومان
-                
-                const totalRevenueInBillions = totalRevenue / 1000000000; // میلیارد تومان
-                const totalRevenueInHemat = totalRevenueInBillions / 1000; // همت
-
-                const perPersonYearly = totalRevenue / (population * 1000000);
-                const perPersonMonthly = perPersonYearly / 12;
-
-                // داده‌های نمودار ۱۲ ماهه
-                const chartData = [];
-                let cumulativeRevenue = 0;
-                
-                for (let month = 0; month <= 12; month++) {
-                    const currentPrice = basePrice + (priceDiff * (month / 12));
-                    const monthlyRevenue = (currentPrice - basePrice) * (dailyConsumption * 1000000 * 30.4); // درآمد این ماه خاص
-                    cumulativeRevenue += monthlyRevenue / 1000000000; // تبدیل به میلیارد تومان برای نمودار تجمعی
-
-                    chartData.push({
-                        name: month === 0 ? 'شروع' : `ماه ${month}`,
-                        قیمت: Math.round(currentPrice),
-                        درآمد_تجمعی: Math.round(cumulativeRevenue),
-                        یارانه_آزاد_شده: Math.round((currentPrice - basePrice))
-                    });
-                }
-
-                return {
-                    totalRevenueInHemat,
-                    perPersonMonthly,
-                    perPersonYearly,
-                    chartData,
-                    priceDiff
-                };
-            }, [basePrice, targetPrice, dailyConsumption, population]);
-
-            // فرمت کردن اعداد
-            const formatNumber = (num) => new Intl.NumberFormat('fa-IR').format(Math.round(num));
-
-            return (
-                <div className="min-h-screen p-4 md:p-8">
-                    <header className="mb-8 text-center">
-                        <h1 className="text-3xl font-bold text-gray-800 mb-2">مدل جامع آزادسازی نرخ بنزین (۱۴۰۴-۱۴۰۵)</h1>
-                        <p className="text-gray-600">شبیه‌سازی حذف رانت انرژی و توزیع عادلانه یارانه</p>
-                    </header>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                        {/* پنل تنظیمات ورودی */}
-                        <div className="card lg:col-span-1 space-y-4 border-r-4 border-blue-500">
-                            <h2 className="text-xl font-bold text-gray-700 border-b pb-2">۱. متغیرهای کلیدی</h2>
-                            
-                            <div>
-                                <label className="block text-sm text-gray-600 mb-1">قیمت فعلی (تومان):</label>
-                                <input type="number" value={basePrice} onChange={e => setBasePrice(Number(e.target.value))} className="w-full p-2 border rounded bg-gray-50 text-left ltr" dir="ltr" />
-                            </div>
-                            
-                            <div>
-                                <label className="block text-sm text-gray-600 mb-1">قیمت هدف/واقعی (تومان):</label>
-                                <input type="number" value={targetPrice} onChange={e => setTargetPrice(Number(e.target.value))} className="w-full p-2 border rounded bg-gray-50 text-left ltr" dir="ltr" />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm text-gray-600 mb-1">مصرف روزانه (میلیون لیتر):</label>
-                                <input type="number" value={dailyConsumption} onChange={e => setDailyConsumption(Number(e.target.value))} className="w-full p-2 border rounded bg-gray-50 text-left ltr" dir="ltr" />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm text-gray-600 mb-1">جمعیت کشور (میلیون نفر):</label>
-                                <input type="number" value={population} onChange={e => setPopulation(Number(e.target.value))} className="w-full p-2 border rounded bg-gray-50 text-left ltr" dir="ltr" />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm text-gray-600 mb-1">بعد خانوار (تعداد نفرات):</label>
-                                <input type="range" min="1" max="10" value={familySize} onChange={e => setFamilySize(Number(e.target.value))} className="w-full" />
-                                <div className="text-center font-bold text-blue-600">{formatNumber(familySize)} نفر</div>
-                            </div>
-                        </div>
-
-                        {/* پنل نتایج کلان */}
-                        <div className="card lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-                             <div className="col-span-1 md:col-span-2">
-                                <h2 className="text-xl font-bold text-gray-700 border-b pb-2 mb-4">۲. نتایج کلان اقتصادی (یک ساله)</h2>
-                             </div>
-                            
-                            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-                                <p className="text-sm text-blue-600 mb-1">کل منابع آزاد شده (سالانه)</p>
-                                <p className="text-3xl font-bold text-blue-800">{formatNumber(calculations.totalRevenueInHemat)} <span className="text-lg font-normal">همت</span></p>
-                                <p className="text-xs text-gray-500 mt-1">معادل {formatNumber(calculations.totalRevenueInHemat * 1000 / exchangeRate)} میلیارد دلار</p>
-                            </div>
-
-                            <div className="bg-green-50 p-4 rounded-lg border border-green-100">
-                                <p className="text-sm text-green-600 mb-1">یارانه پنهان حذف شده (هر لیتر)</p>
-                                <p className="text-3xl font-bold text-green-800">{formatNumber(calculations.priceDiff)} <span className="text-lg font-normal">تومان</span></p>
-                                <p className="text-xs text-gray-500 mt-1">تفاوت قیمت جهانی و فعلی</p>
-                            </div>
-
-                            <div className="bg-purple-50 p-4 rounded-lg border border-purple-100 col-span-1 md:col-span-2">
-                                <p className="text-sm text-purple-600 mb-1">دریافتی ماهانه هر فرد (نقدی + سهم انرژی)</p>
-                                <div className="flex items-end gap-2">
-                                    <p className="text-4xl font-bold text-purple-800">{formatNumber(calculations.perPersonMonthly)}</p>
-                                    <span className="text-xl text-purple-600 mb-1">تومان</span>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4 mt-3 text-sm">
-                                    <div className="bg-white p-2 rounded text-center shadow-sm">
-                                        <span className="block text-gray-500">سهم نقدی (۵۰٪)</span>
-                                        <span className="font-bold text-purple-700">{formatNumber(calculations.perPersonMonthly / 2)} تومان</span>
-                                    </div>
-                                    <div className="bg-white p-2 rounded text-center shadow-sm">
-                                        <span className="block text-gray-500">سهم انرژی (۵۰٪)</span>
-                                        <span className="font-bold text-purple-700">{formatNumber(calculations.perPersonMonthly / 2)} تومان</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-12">
+        <!-- About Section -->
+        <section class="mb-16">
+            <div class="bg-white/5 backdrop-blur-md rounded-2xl p-8 border border-teal-700/30">
+                <h2 class="text-3xl font-bold mb-6 text-center gradient-text">درباره ecoFlow</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div>
+                        <div class="feature-icon mb-4">📊</div>
+                        <h3 class="text-xl font-bold mb-2">شفافیت بصری</h3>
+                        <p class="text-teal-100 text-sm leading-relaxed">تبدیل اعداد انتزاعی بودجه و اقتصاد به
+                            گرافیک‌های قابل فهم و تعاملی</p>
                     </div>
-
-                    {/* بخش تحلیل خانوار */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                        <div className="card border-t-4 border-indigo-500">
-                            <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-                                وضعیت خانوار شما ({familySize} نفره)
-                            </h3>
-                            
-                            <div className="space-y-4">
-                                <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
-                                    <span className="text-gray-700">دریافتی کل ماهانه خانوار:</span>
-                                    <span className="text-xl font-bold text-indigo-700">{formatNumber(calculations.perPersonMonthly * familySize)} تومان</span>
-                                </div>
-                                <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
-                                    <span className="text-gray-700">دریافتی کل سالانه خانوار:</span>
-                                    <span className="text-xl font-bold text-indigo-700">{formatNumber(calculations.perPersonYearly * familySize)} تومان</span>
-                                </div>
-                                
-                                <div className="mt-4 p-4 bg-yellow-50 rounded border border-yellow-200">
-                                    <h4 className="font-bold text-yellow-800 mb-2">تحلیل عدالت اجتماعی (خانوار بدون خودرو):</h4>
-                                    <p className="text-sm text-yellow-900 leading-relaxed text-justify">
-                                        این خانوار قبلاً از یارانه بنزین بهره مستقیم نمی‌برد، اما هزینه تورم آن را پرداخت می‌کرد. 
-                                        اکنون ماهانه <span className="font-bold">{formatNumber(calculations.perPersonMonthly * familySize)} تومان</span> دریافت می‌کند. 
-                                        حتی با فرض افزایش ۳۰ درصدی کرایه حمل‌ونقل عمومی، این مبلغ چندین برابر هزینه اضافی را پوشش می‌دهد و قدرت خرید خانوار را افزایش می‌دهد.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="card">
-                            <h3 className="text-lg font-bold text-gray-800 mb-4">روند افزایش قیمت در ۱۲ ماه</h3>
-                            <div className="h-64 w-full" dir="ltr">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <LineChart data={calculations.chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                                        <CartesianGrid stroke="#eee" strokeDasharray="5 5" />
-                                        <XAxis dataKey="name" />
-                                        <YAxis />
-                                        <Tooltip formatter={(value) => formatNumber(value) + ' تومان'} />
-                                        <Legend />
-                                        <Line type="monotone" dataKey="قیمت" stroke="#ef4444" name="قیمت بنزین (تومان)" strokeWidth={3} />
-                                    </LineChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </div>
+                    <div>
+                        <div class="feature-icon mb-4">🎛️</div>
+                        <h3 class="text-xl font-bold mb-2">سناریوسازی</h3>
+                        <p class="text-teal-100 text-sm leading-relaxed">تغییر متغیرهای کلیدی و مشاهده لحظه‌ای تأثیر آن
+                            بر اقتصاد</p>
                     </div>
-
-                    {/* نمودار تجمعی */}
-                    <div className="card mb-8">
-                        <h3 className="text-lg font-bold text-gray-800 mb-4">انباشت منابع مالی جهت توزیع (میلیارد تومان)</h3>
-                        <div className="h-72 w-full" dir="ltr">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={calculations.chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                                    <defs>
-                                        <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
-                                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                                        </linearGradient>
-                                    </defs>
-                                    <XAxis dataKey="name" />
-                                    <YAxis />
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <Tooltip formatter={(value) => formatNumber(value) + ' میلیارد تومان'} />
-                                    <Area type="monotone" dataKey="درآمد_تجمعی" stroke="#3b82f6" fillOpacity={1} fill="url(#colorRevenue)" name="منابع آزاد شده تجمعی" />
-                                </AreaChart>
-                            </ResponsiveContainer>
-                        </div>
+                    <div>
+                        <div class="feature-icon mb-4">🔐</div>
+                        <h3 class="text-xl font-bold mb-2">استقلال</h3>
+                        <p class="text-teal-100 text-sm leading-relaxed">میزبانی بر روی گیت‌هاب برای جلوگیری از سانسور و
+                            اطمینان از دسترسی</p>
                     </div>
-
-                    <footer className="text-center text-gray-500 text-sm mt-8">
-                        <p>مدل‌سازی بر اساس داده‌های نوامبر ۲۰۲۵ | طراحی شده جهت بررسی اثرات حذف یارانه انرژی</p>
-                    </footer>
                 </div>
-            );
-        };
+            </div>
+        </section>
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
+        <!-- Dashboards Grid -->
+        <section class="mb-16">
+            <h2 class="text-3xl font-bold mb-8 text-center gradient-text">داشبورد‌های تعاملی</h2>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Dashboard 1: Free Price Model -->
+                <a href="freePriceModel.html" class="card-hover">
+                    <div
+                        class="bg-white/5 backdrop-blur-md rounded-2xl p-8 border border-teal-700/30 h-full hover:bg-white/10">
+                        <div class="mb-4">
+                            <span
+                                class="inline-block px-4 py-2 bg-blue-500/20 text-blue-200 rounded-full text-sm font-semibold">مدل‌سازی
+                                اقتصادی</span>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-4 text-white">مدل جامع آزادسازی نرخ بنزین</h3>
+                        <p class="text-teal-100 mb-6 leading-relaxed">
+                            شبیه‌سازی تعاملی حذف یارانه بنزین و توزیع عادلانه منابع بین مردم.
+                            تحلیل اثرات تغییر نرخ بنزین، درآمد نفتی و جمعیت بر یارانه نقدی و قدرت خرید.
+                        </p>
+                        <div class="space-y-2 mb-6">
+                            <div class="flex items-center text-teal-100 text-sm">
+                                <span class="ml-2">✓</span>
+                                <span>محاسبه منابع آزاد شده سالانه</span>
+                            </div>
+                            <div class="flex items-center text-teal-100 text-sm">
+                                <span class="ml-2">✓</span>
+                                <span>تحلیل وضعیت خانوار و قدرت خرید</span>
+                            </div>
+                            <div class="flex items-center text-teal-100 text-sm">
+                                <span class="ml-2">✓</span>
+                                <span>روند افزایش قیمت و درآمد تجمعی</span>
+                            </div>
+                        </div>
+                        <button
+                            class="w-full py-3 px-4 bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-semibold rounded-lg hover:from-teal-600 hover:to-cyan-600 transition-all">
+                            بازدید داشبورد →
+                        </button>
+                    </div>
+                </a>
+
+                <!-- Dashboard 2: Inflation Prediction -->
+                <a href="InflationPrediction.html" class="card-hover">
+                    <div
+                        class="bg-white/5 backdrop-blur-md rounded-2xl p-8 border border-teal-700/30 h-full hover:bg-white/10">
+                        <div class="mb-4">
+                            <span
+                                class="inline-block px-4 py-2 bg-purple-500/20 text-purple-200 rounded-full text-sm font-semibold">تحلیل
+                                تورم</span>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-4 text-white">مدل تورم قیمت‌گذاری پلکانی (IBT)</h3>
+                        <p class="text-teal-100 mb-6 leading-relaxed">
+                            پیش‌بینی اثرات تورمی قیمت‌گذاری پلکانی بنزین (۱۵۰۰/۳۰۰۰/۵۰۰۰ تومان)
+                            بر اساس توزیع مصرف خودروهای مختلف در جامعه.
+                        </p>
+                        <div class="space-y-2 mb-6">
+                            <div class="flex items-center text-teal-100 text-sm">
+                                <span class="ml-2">✓</span>
+                                <span>محاسبه درصد افزایش میانگین قیمت وزنی</span>
+                            </div>
+                            <div class="flex items-center text-teal-100 text-sm">
+                                <span class="ml-2">✓</span>
+                                <span>پیش‌بینی تورم ناشی از فشار هزینه</span>
+                            </div>
+                            <div class="flex items-center text-teal-100 text-sm">
+                                <span class="ml-2">✓</span>
+                                <span>تحلیل توزیع مصرف و درآمد دولت</span>
+                            </div>
+                        </div>
+                        <button
+                            class="w-full py-3 px-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all">
+                            بازدید داشبورد →
+                        </button>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- How to Use Section -->
+        <section class="mb-16">
+            <div class="bg-white/5 backdrop-blur-md rounded-2xl p-8 border border-teal-700/30">
+                <h2 class="text-3xl font-bold mb-8 text-center gradient-text">نحوه استفاده</h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="text-center">
+                        <div
+                            class="w-12 h-12 mx-auto mb-4 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                            1</div>
+                        <h4 class="font-bold mb-2 text-white">یک داشبورد انتخاب کنید</h4>
+                        <p class="text-sm text-teal-100">یکی از داشبورد‌های بالا را کلیک کنید</p>
+                    </div>
+                    <div class="text-center">
+                        <div
+                            class="w-12 h-12 mx-auto mb-4 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                            2</div>
+                        <h4 class="font-bold mb-2 text-white">متغیرها را تنظیم کنید</h4>
+                        <p class="text-sm text-teal-100">اسلایدرها و ورودی‌ها را تغییر دهید</p>
+                    </div>
+                    <div class="text-center">
+                        <div
+                            class="w-12 h-12 mx-auto mb-4 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                            3</div>
+                        <h4 class="font-bold mb-2 text-white">نتایج را مشاهده کنید</h4>
+                        <p class="text-sm text-teal-100">تاثیرات لحظه‌ای را ببینید</p>
+                    </div>
+                    <div class="text-center">
+                        <div
+                            class="w-12 h-12 mx-auto mb-4 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                            4</div>
+                        <h4 class="font-bold mb-2 text-white">اطلاعات را درک کنید</h4>
+                        <p class="text-sm text-teal-100">اقتصاد را بهتر بشناسید</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="mb-16">
+            <div class="bg-white/5 backdrop-blur-md rounded-2xl p-8 border border-teal-700/30">
+                <h2 class="text-3xl font-bold mb-8 text-center gradient-text">ویژگی‌های اصلی</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="flex gap-4">
+                        <div class="flex-shrink-0">
+                            <div
+                                class="flex items-center justify-center h-12 w-12 rounded-md bg-gradient-to-br from-teal-400 to-cyan-400">
+                                📱
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-bold text-white mb-2">واکنش‌گرا (Responsive)</h4>
+                            <p class="text-teal-100">کاملا سازگار با تمام دستگاه‌ها - موبایل، تبلت و کامپیوتر</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="flex-shrink-0">
+                            <div
+                                class="flex items-center justify-center h-12 w-12 rounded-md bg-gradient-to-br from-teal-400 to-cyan-400">
+                                ⚡
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-bold text-white mb-2">سریع و بهینه</h4>
+                            <p class="text-teal-100">محاسبات لحظه‌ای بدون تاخیری حتی با داده‌های بزرگ</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="flex-shrink-0">
+                            <div
+                                class="flex items-center justify-center h-12 w-12 rounded-md bg-gradient-to-br from-teal-400 to-cyan-400">
+                                📊
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-bold text-white mb-2">نمودارهای تعاملی</h4>
+                            <p class="text-teal-100">نمودارهای زنده که با تغییر داده‌ها به روز می‌شوند</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="flex-shrink-0">
+                            <div
+                                class="flex items-center justify-center h-12 w-12 rounded-md bg-gradient-to-br from-teal-400 to-cyan-400">
+                                🔬
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-bold text-white mb-2">مدل‌های علمی</h4>
+                            <p class="text-teal-100">مبتنی بر مدل‌های اقتصادی و آماری معتبر</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="flex-shrink-0">
+                            <div
+                                class="flex items-center justify-center h-12 w-12 rounded-md bg-gradient-to-br from-teal-400 to-cyan-400">
+                                🌐
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-bold text-white mb-2">متن‌باز</h4>
+                            <p class="text-teal-100">کد منبع کامل در دسترس بر روی GitHub</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="flex-shrink-0">
+                            <div
+                                class="flex items-center justify-center h-12 w-12 rounded-md bg-gradient-to-br from-teal-400 to-cyan-400">
+                                🔗
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-bold text-white mb-2">منابع معتبر</h4>
+                            <p class="text-teal-100">تمام داده‌ها با منابع رسمی استنادپذیر</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="mb-16">
+            <div
+                class="bg-gradient-to-r from-teal-600/50 to-cyan-600/50 backdrop-blur-md rounded-2xl p-12 border border-teal-500/50 text-center">
+                <h2 class="text-3xl font-bold mb-4 text-white">شروع کنید</h2>
+                <p class="text-lg text-teal-50 mb-8 max-w-2xl mx-auto">
+                    یکی از داشبورد‌های تعاملی ما را امتحان کنید و بفهمید اقتصاد چگونه کار می‌کند
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="freePriceModel.html"
+                        class="px-8 py-4 bg-white/20 text-white font-bold rounded-lg hover:bg-white/30 transition-all border border-white/30">
+                        مدل بنزین
+                    </a>
+                    <a href="InflationPrediction.html"
+                        class="px-8 py-4 bg-white/20 text-white font-bold rounded-lg hover:bg-white/30 transition-all border border-white/30">
+                        مدل تورم
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Project Section -->
+        <section class="mb-16">
+            <div class="bg-white/5 backdrop-blur-md rounded-2xl p-8 border border-teal-700/30">
+                <h2 class="text-3xl font-bold mb-8 text-center gradient-text">درباره پروژه</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="text-xl font-bold text-white mb-4">هدف</h3>
+                        <p class="text-teal-100 leading-relaxed">
+                            ecoFlow با هدف شفاف‌سازی چرخه اقتصادی ایران و نمایش ارتباط علت و معلولی بین تصمیم‌گیری‌های
+                            کلان (مانند قیمت‌گذاری انرژی)
+                            و تأثیر آن بر معیشت مردم متوسط طراحی شده است.
+                        </p>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-white mb-4">فناوری</h3>
+                        <p class="text-teal-100 leading-relaxed">
+                            این پروژه از React برای رابط کاربری، Recharts برای نمودارهای تعاملی، و React Tailwind CSS
+                            برای طراحی
+                            استفاده می‌کند. تمام داده‌ها از منابع رسمی ایران و سازمان‌های بین‌المللی استخراج می‌شوند.
+                        </p>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-white mb-4">مشارکت</h3>
+                        <p class="text-teal-100 leading-relaxed">
+                            این پروژه متن‌باز است و از مشارکت توسعه‌دهندگان، داده‌کاوان، و متخصصان اقتصاد به‌رسمیت
+                            می‌شناسد.
+                            خود را در <a href="https://github.com/xchaosPulse/ecoFlow" target="_blank">مخزن GitHub</a>
+                            بپیوندید.
+                        </p>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-white mb-4">منابع</h3>
+                        <p class="text-teal-100 leading-relaxed">
+                            داده‌های پروژه از منابع معتبری مانند بانک مرکزی ایران، مرکز آمار ایران، سازمان ملل
+                            (OPEC/IEA)
+                            و سازمان شفافیت بین‌المللی استخراج می‌شوند.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FAQ Section -->
+        <section class="mb-16">
+            <div class="bg-white/5 backdrop-blur-md rounded-2xl p-8 border border-teal-700/30">
+                <h2 class="text-3xl font-bold mb-8 text-center gradient-text">سؤالات متکرر</h2>
+                <div class="space-y-6">
+                    <div>
+                        <h4 class="text-lg font-bold text-white mb-2">آیا این ابزار عوام‌فریبی است؟</h4>
+                        <p class="text-teal-100">
+                            خیر. تمام مدل‌ها بر اساس نظریات اقتصادی معتبر (نظریه کنز، تورم هزینه‌ای، و توزیع یارانه‌های
+                            مستقیم)
+                            و با استفاده از داده‌های رسمی طراحی شده‌اند. مدل‌ها مفروضات خود را بصری نشان می‌دهند تا
+                            کاربر بتواند آنها را نقد کند.
+                        </p>
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-bold text-white mb-2">آیا کسی می‌تواند داده‌ها را ویرایش کند؟</h4>
+                        <p class="text-teal-100">
+                            نه، داده‌های نمایش‌داده شده از طریق Pull Request در گیت‌هاب کنترل می‌شوند. هر تغییر باید
+                            مورد بررسی و تأیید قرار گیرد
+                            تا اطمینان حاصل شود داده‌های صحیح و معتبر استفاده می‌شوند.
+                        </p>
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-bold text-white mb-2">آیا این ابزار پیش‌بینی کامل و دقیق دارد؟</h4>
+                        <p class="text-teal-100">
+                            خیر. اقتصاد پیچیده است و این مدل‌ها ساده‌سازی هستند. آنها برای ایجاد شهود و بحث درباره
+                            ترید-آف‌های سیاسی طراحی شده‌اند،
+                            نه برای پیش‌بینی دقیق. بازار تأثیر‌گذاران بسیاری دارد که در هیچ مدل ریاضی قابل کنترل نیستند.
+                        </p>
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-bold text-white mb-2">چگونه می‌توانم مسائل و پیشنهادات را گزارش کنم؟
+                        </h4>
+                        <p class="text-teal-100">
+                            لطفاً یک <a href="https://github.com/xchaosPulse/ecoFlow/issues" target="_blank">Issue</a>
+                            در مخزن GitHub باز کنید.
+                            یا اگر تغییری برای ارائه دارید، یک <a href="https://github.com/xchaosPulse/ecoFlow/pulls"
+                                target="_blank">Pull Request</a> ارسال کنید.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-teal-700/30 backdrop-blur-sm mt-16">
+        <div class="container mx-auto px-4 py-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+                <div>
+                    <h3 class="text-lg font-bold text-white mb-4">درباره</h3>
+                    <ul class="space-y-2 text-teal-100 text-sm">
+                        <li><a href="https://github.com/xchaosPulse/ecoFlow" target="_blank">GitHub</a></li>
+                        <li><a href="https://github.com/xchaosPulse/ecoFlow/issues" target="_blank">Issues</a></li>
+                        <li><a href="https://github.com/xchaosPulse/ecoFlow/discussions" target="_blank">Discussions</a>
+                        </li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-white mb-4">داشبورد‌ها</h3>
+                    <ul class="space-y-2 text-teal-100 text-sm">
+                        <li><a href="freePriceModel.html">مدل جامع آزادسازی نرخ بنزین</a></li>
+                        <li><a href="InflationPrediction.html">مدل تورم قیمت‌گذاری پلکانی</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-white mb-4">منابع</h3>
+                    <ul class="space-y-2 text-teal-100 text-sm">
+                        <li><a href="https://github.com/xchaosPulse/ecoFlow/blob/main/DESIGN.md" target="_blank">سند
+                                طراحی</a></li>
+                        <li><a href="https://github.com/xchaosPulse/ecoFlow/blob/main/README.md"
+                                target="_blank">راهنما</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-teal-700/30 pt-8 text-center text-teal-100 text-sm">
+                <p>© 2025 ecoFlow | متن‌باز تحت لایسنس MIT</p>
+                <p class="mt-2">
+                    ساخت شده برای شفاف‌سازی اقتصاد و کمک به تصمیم‌گیری آگاهانه
+                </p>
+            </div>
+        </div>
+    </footer>
 </body>
+
 </html>
