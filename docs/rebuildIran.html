@@ -3,13 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>داشبورد طرح اقتصادی بنای ایران (۱۴۰۳-۱۴۰۷)</title>
+    <title>داشبورد اقتصادی بنای ایران (۱۴۰۳-۱۴۰۷)</title>
     
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100;300;400;500;700;900&display=swap" rel="stylesheet">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN for dynamic charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
     <script>
         tailwind.config = {
             theme: {
@@ -30,7 +33,9 @@
                             gold: '#fbbf24',
                             danger: '#ef4444',
                             success: '#22c55e'
-                        }
+                        },
+                        historical: '#3b82f6',
+                        forecast: '#ef4444',
                     }
                 }
             }
@@ -57,19 +62,10 @@
             to { opacity: 1; transform: translateY(0); }
         }
         /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1; 
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1; 
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8; 
-        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         /* Style for the fixed timeline marker */
         .timeline-marker {
             position: absolute;
@@ -87,13 +83,21 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useRef } = React;
 
-        // --- Icons Data (Self-contained, all wrapped in Fragments) ---
+        // --- Global Constants & Icons Data ---
+        const CHART_ID = "inflationPathChart";
+        const historicalInflationData = [
+            { year: 1400, value: 40 },
+            { year: 1401, value: 49 },
+            { year: 1402, value: 46 } // Current year/starting point
+        ];
+        const forecastYears = [1403, 1404, 1405, 1406, 1407];
+        const inflationTarget = 8; // Target: 6-8%
+
+        // Icons Data
         const iconsData = {
             LayoutDashboard: <><rect width="7" height="9" x="3" y="3" rx="1" /><rect width="7" height="5" x="14" y="3" rx="1" /><rect width="7" height="9" x="14" y="12" rx="1" /><rect width="7" height="5" x="3" y="16" rx="1" /></>,
-            Map: <><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" /><line x1="9" x2="9" y1="3" y2="18" /><line x1="15" x2="15" y1="6" y2="21" /></>,
-            Columns: <><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><line x1="12" x2="12" y1="3" y2="21" /></>,
             TrendingUp: <><polyline points="22 7 13.5 15.5 8.5 10.5 2 17" /><polyline points="16 7 22 7 22 13" /></>,
             Building2: <><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z" /><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" /><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2" /><path d="M10 6h4" /><path d="M10 10h4" /><path d="M10 14h4" /><path d="M10 18h4" /></>,
             Users: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></>,
@@ -109,15 +113,14 @@
             Handshake: <><path d="M11 17L2 22l1-4 10-10 4 1-5 5" /><path d="m14 10 7-7" /><path d="M8 18h.01" /><path d="M18 13.5V10l3-3 1-4" /></>,
             DollarSign: <><line x1="12" x2="12" y1="2" y2="22" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></>,
             Gauge: <><path d="M12 14c1.1 0 2-.9 2-2s-.9-2-2-2" /><path d="M21.5 10c-.8-2.6-2.9-4.8-5.7-5.5" /><path d="M2 12h2" /><path d="M20 12h2" /><path d="M17 21a1.2 1.2 0 0 0-2-2" /><path d="M12 2a10 10 0 1 0 0 20 10 10 0 1 0 0-20" /><path d="M4.5 10c.8-2.6 2.9-4.8 5.7-5.5" /></>,
-            Hourglass: <><path d="M5 21v-3.5a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4V21" /><path d="M2 21h20" /><path d="M2 3h20" /><path d="M17 3v3.5a4 4 0 0 0-4 4H7a4 4 0 0 0-4-4V3" /></>
+            Hourglass: <><path d="M5 21v-3.5a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4V21" /><path d="M2 21h20" /><path d="M2 3h20" /><path d="M17 3v3.5a4 4 0 0 0-4 4H7a4 4 0 0 0-4-4V3" /></>,
+            TrendingDown: <><polyline points="22 17 13.5 8.5 8.5 13.5 2 7" /><polyline points="16 17 22 17 22 11" /></>,
         };
 
         // Icon Component
         const Icon = ({ name, size = 20, color = "currentColor", className = "" }) => {
             const iconContent = iconsData[name];
-            
             if (!iconContent) return null;
-            
             return (
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -140,13 +143,13 @@
         const GaugeChart = ({ value, max, label, colorClass, iconName, unit, startLabel, endLabel }) => {
             const normalizedValue = Math.min(Math.max(value, 0), max);
             const percentage = (normalizedValue / max);
-            // 240 degrees sweep (from -120 to +120)
             const angle = percentage * 240 - 120;
             const needleTransform = `rotate(${angle})`;
-            
-            // Text color based on value position (Crisis vs Target)
             const valueColor = value > max * 0.5 ? 'text-red-600' : 'text-green-600';
 
+            // Placeholder for the custom color based on the utility class
+            const strokeColor = colorClass.includes('red') ? '#ef4444' : colorClass.includes('green') ? '#22c55e' : '#3b82f6';
+            
             return (
                 <div className="flex flex-col items-center bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
                     <div className={`p-3 rounded-xl bg-opacity-10 ${colorClass.replace('text-', 'bg-')} mb-4`}>
@@ -158,17 +161,12 @@
                     <div className="relative w-32 h-16 mb-2">
                         <svg viewBox="0 0 100 50" className="w-full h-full overflow-hidden">
                             {/* Background Arc */}
-                            <path
-                                d="M 5 50 A 45 45 0 0 1 95 50"
-                                fill="none"
-                                stroke="#e2e8f0"
-                                strokeWidth="5"
-                            />
+                            <path d="M 5 50 A 45 45 0 0 1 95 50" fill="none" stroke="#e2e8f0" strokeWidth="5" />
                             {/* Value Arc (The color changes based on the value) */}
                             <path
                                 d="M 5 50 A 45 45 0 0 1 95 50"
                                 fill="none"
-                                stroke={colorClass.replace('text-', '#').replace('red', 'ef4444').replace('green', '22c55e').replace('blue', '3b82f6')}
+                                stroke={strokeColor}
                                 strokeWidth="5"
                                 strokeDasharray={2 * Math.PI * 45 * (240 / 360)}
                                 strokeDashoffset={(2 * Math.PI * 45 * (240 / 360)) * (1 - percentage)}
@@ -198,8 +196,8 @@
         // Section 1: Crisis Snapshot & The 5 Commitments
         const CrisisSnapshot = () => {
             const crisisGauges = [
-                { label: "تورم مزمن", value: 46, max: 75, unit: "%", colorClass: "text-red-600", iconName: "Percent", startLabel: "کم (۸%)", endLabel: "بحران (۷۵%)" },
-                { label: "رشد اقتصادی", value: 0.5, max: 6, unit: "%", colorClass: "text-red-600", iconName: "TrendingDown", startLabel: "رکود", endLabel: "رونق (۶%)" },
+                { label: "تورم مزمن", value: 46, max: 75, unit: "%", colorClass: "text-red-600", iconName: "Percent", startLabel: "هدف (۸٪)", endLabel: "بحران (۷۵٪)" },
+                { label: "رشد اقتصادی", value: 0.5, max: 6, unit: "%", colorClass: "text-red-600", iconName: "TrendingDown", startLabel: "رکود", endLabel: "رونق (۶٪)" },
                 { label: "جمعیت زیر فقر مطلق", value: 25.6, max: 30, unit: "م.نفر", colorClass: "text-red-600", iconName: "Users", startLabel: "صفر", endLabel: "بحران" },
                 { label: "بار تکفل (به ازای هر شاغل)", value: 2.5, max: 3.5, unit: "نفر", colorClass: "text-red-600", iconName: "Handshake", startLabel: "۱", endLabel: "۳.۵+" },
             ];
@@ -229,11 +227,9 @@
                         ))}
                     </div>
                     <div className="bg-red-50 border-r-4 border-red-500 p-4 rounded-lg text-sm text-red-800 font-medium">
-                        *مقایسه: میانگین تورم جهانی در دوره ۲۰۰۹-۲۰۱۸ حدود ۱۸٪ بوده است. تورم ۴۶٪ ایران در سال ۱۴۰۲، ۲.۵ برابر این میانگین است.
-                        
+                        *مقایسه: تورم ۴۶٪ ایران در سال ۱۴۰۲، ۲.۵ برابر میانگین تورم جهانی (۱۸٪ در دوره ۲۰۰۹-۲۰۱۸) است.
                     </div>
                     
-
                     {/* 5 Commitments */}
                     <h3 className="text-xl font-bold text-slate-800 border-r-4 border-brand-500 pr-3 pt-6">۲. اهداف پنج‌گانه سیاستی (خروجی مدل‌سازی)</h3>
                     <p className="text-slate-500">اهداف قابل سنجش و مدل‌سازی شده برای دوره چهار ساله.</p>
@@ -253,191 +249,203 @@
             );
         };
 
-        // Section 2: Core Transition Model (Inflation and Job Growth)
+        // Section 2: Core Transition Model (Interactive Chart)
         const TransitionModel = () => {
-            // Data for Inflation path (46% -> 15% -> 8%)
-            const inflationPath = [
-                { year: '۱۴۰۲', value: 46 },
-                { year: '۱۴۰۳', value: 30 },
-                { year: '۱۴۰۴', value: 15 },
-                { year: '۱۴۰۵', value: 10 },
-                { year: '۱۴۰۶', value: 8 },
-                { year: '۱۴۰۷', value: 7 },
-            ];
+            const chartRef = useRef(null);
+            const chartInstanceRef = useRef(null);
+            const [inflationDropRate, setInflationDropRate] = useState(10); // Initial drop rate per year (10 points)
 
-            // Data for Economic Growth S-Curve (0.5% -> 6%)
-            const growthPath = [
-                { year: '۱۴۰۲', value: 0.5 },
-                { year: '۱۴۰۳', value: 2.5 }, // Stabilization & initial reform effects
-                { year: '۱۴۰۴', value: 4.0 }, // Deregulation effects
-                { year: '۱۴۰۵', value: 6.0 }, // Target achieved
-                { year: '۱۴۰۶', value: 6.0 }, 
-                { year: '۱۴۰۷', value: 6.0 },
-            ];
-            
-            const JobCounter = ({ jobsPerYear }) => {
-                const totalYears = 4;
-                const totalJobs = jobsPerYear * totalYears;
-                
-                // Animated Job Counter (Simple cumulative visualization)
-                const [currentJobs, setCurrentJobs] = useState(0);
+            // Function to calculate the forecasted inflation path
+            const calculateForecast = (dropRate) => {
+                const lastHistoricalValue = historicalInflationData[historicalInflationData.length - 1].value;
+                const forecastedValues = [];
+                let currentValue = lastHistoricalValue;
 
-                useEffect(() => {
-                    let start = 0;
-                    const end = totalJobs;
-                    const duration = 2000;
-                    const startTimestamp = performance.now();
-
-                    const step = (timestamp) => {
-                        const elapsed = timestamp - startTimestamp;
-                        const progress = Math.min(elapsed / duration, 1);
-                        setCurrentJobs(Math.floor(progress * end));
-                        if (progress < 1) {
-                            requestAnimationFrame(step);
-                        }
-                    };
-
-                    requestAnimationFrame(step);
-                    // Reset on unmount/re-render if needed
-                    return () => setCurrentJobs(0);
-                }, []);
-                
-                const jobProgress = (currentJobs / totalJobs) * 100;
-
-                return (
-                    <div className="p-6 bg-slate-50 rounded-xl shadow-inner border border-slate-200">
-                        <div className="flex items-center gap-4 mb-4">
-                            <Icon name="Users" size={28} className="text-brand-600" />
-                            <h4 className="text-xl font-bold text-slate-800">شمارنده تجمعی اشتغال خالص</h4>
-                        </div>
-                        <p className="text-xs text-slate-500 mb-4">هدف: ایجاد ۱.۱ میلیون شغل خالص در هر سال (مجموع ۴ سال).</p>
-                        
-                        <div className="text-center">
-                             <span className="text-5xl font-extrabold text-green-600">
-                                {new Intl.NumberFormat('fa-IR').format(currentJobs)}
-                            </span>
-                            <span className="text-2xl text-green-500"> شغل</span>
-                            <p className="text-sm text-slate-500 mt-1">تعداد کل مشاغل خالص ایجاد شده در دوره</p>
-                        </div>
-
-                        <div className="mt-6">
-                            <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                                <div className="h-full bg-green-500 rounded-full transition-all duration-1000" style={{ width: `${jobProgress}%` }}></div>
-                            </div>
-                            <div className="flex justify-between text-xs text-slate-500 mt-1">
-                                <span>شروع: ۰</span>
-                                <span>هدف: {new Intl.NumberFormat('fa-IR').format(totalJobs)}</span>
-                            </div>
-                        </div>
-                    </div>
-                );
+                for (let i = 0; i < forecastYears.length; i++) {
+                    // Apply drop rate, but ensure it doesn't go below the target
+                    currentValue = Math.max(inflationTarget, currentValue - dropRate);
+                    forecastedValues.push(currentValue);
+                }
+                return forecastedValues;
             };
 
-            const TimelineChart = ({ data, color, title, unit, start, end, target }) => {
-                const height = 150;
-                const padding = 10;
-                const maxVal = Math.max(...data.map(d => d.value));
-                const minVal = Math.min(...data.map(d => d.value));
+            const updateChart = (rate) => {
+                if (!chartInstanceRef.current) return;
+
+                const forecastedData = calculateForecast(rate);
                 
-                // Adjust max val slightly for padding at top
-                const displayMax = maxVal * 1.1; 
-                const displayMin = minVal >= 0 ? 0 : minVal * 1.1;
-                const range = displayMax - displayMin;
+                // Combine historical data and forecast data for the second dataset
+                const allData = [...historicalInflationData.map(d => d.value), ...forecastedData];
+                
+                // We use the second dataset (index 1) for the combined line
+                // Null out historical points so the line starts at the transition year (1402)
+                const forecastDataPoints = allData.map((d, i) => (i < historicalInflationData.length - 1) ? null : d);
+                
+                chartInstanceRef.current.data.datasets[1].data = forecastDataPoints;
+                chartInstanceRef.current.data.datasets[1].label = `مسیر تحول تورم (مهار سالانه: ${rate.toFixed(1)} واحد)`;
+                
+                // Update the job counter based on successful inflation control (simplified proxy)
+                const jobCounterElement = document.getElementById('jobCounterValue');
+                if (jobCounterElement) {
+                    const jobs = 1100000 * 4; // Base: 4.4M
+                    const adjustmentFactor = rate / 10; // Simple factor: 10 drop rate = 100% factor
+                    const finalJobs = Math.floor(jobs * Math.min(1.5, adjustmentFactor)); // Max 1.5x
+                    jobCounterElement.textContent = new Intl.NumberFormat('fa-IR').format(finalJobs);
+                }
 
-                // Normalize points
-                const points = data.map((d, i) => {
-                    const x = (i / (data.length - 1)) * 100;
-                    // Inverse Y
-                    const y = 100 - ((d.value - displayMin) / range) * 100; 
-                    return `${x},${y}`;
-                }).join(' ');
-
-                // Calculate target Y position for the goal line
-                const targetY = 100 - ((target - displayMin) / range) * 100;
-
-                return (
-                    <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-lg">
-                        <div className="flex justify-between items-center mb-4">
-                            <h4 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                                <Icon name="BarChart4" size={20} className={`text-${color}-500`} />
-                                {title}
-                            </h4>
-                            <span className={`text-xs font-bold px-3 py-1 rounded-full bg-${color}-100 text-${color}-700`}>
-                                هدف: {target}{unit} (۱۴۰۷)
-                            </span>
-                        </div>
-                        
-                        <div className="relative h-40 w-full">
-                            <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="h-full w-full overflow-visible">
-                                {/* Target Line */}
-                                {targetY > 0 && targetY < 100 && (
-                                    <line x1="0" y1={targetY} x2="100" y2={targetY} stroke="#fcd34d" strokeWidth="0.5" strokeDasharray="4 2" />
-                                )}
-                                
-                                {/* The Line */}
-                                <polyline
-                                    fill="none"
-                                    stroke={`#${color === 'red' ? 'ef4444' : color === 'green' ? '22c55e' : '3b82f6'}`}
-                                    strokeWidth="2.5"
-                                    points={points}
-                                    vectorEffect="non-scaling-stroke"
-                                    strokeLinejoin="round"
-                                />
-
-                                {/* Data Points & Labels */}
-                                {data.map((d, i) => {
-                                    const x = (i / (data.length - 1)) * 100;
-                                    const y = 100 - ((d.value - displayMin) / range) * 100;
-                                    const isStart = i === 0;
-                                    const isEnd = i === data.length - 1;
-
-                                    return (
-                                        <g key={i}>
-                                            <circle cx={x} cy={y} r="2" fill="white" stroke="currentColor" className={`text-${color}-500`} strokeWidth="1.5" />
-                                            {/* Value Label */}
-                                            <text x={x} y={y - 5} fontSize="4" textAnchor="middle" fill="#1e293b" fontWeight="bold">{d.value.toFixed(d.value % 1 !== 0 ? 1 : 0)}{unit}</text>
-                                            {/* Year Label */}
-                                            <text x={x} y="105" fontSize="4" textAnchor="middle" fill="#64748b">{d.year}</text>
-                                        </g>
-                                    )
-                                })}
-                            </svg>
-                        </div>
-                    </div>
-                );
+                chartInstanceRef.current.update();
             };
 
+            // Initialization Effect (runs once)
+            useEffect(() => {
+                const labels = [...historicalInflationData.map(d => d.year.toString()), ...forecastYears.map(y => y.toString())];
+                const initialForecastedData = calculateForecast(inflationDropRate);
+                const allData = [...historicalInflationData.map(d => d.value), ...initialForecastedData];
+
+                // Create Target Line Dataset
+                const targetLineData = labels.map(() => inflationTarget);
+
+                chartInstanceRef.current = new Chart(chartRef.current, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            // 1. Target Line
+                            {
+                                label: `هدف پایدار تورم (${inflationTarget}٪)`,
+                                data: targetLineData,
+                                borderColor: '#059669', // Emerald green
+                                borderWidth: 2,
+                                borderDash: [5, 5],
+                                pointRadius: 0,
+                                fill: false,
+                            },
+                            // 2. Combined Historical and Forecast Path
+                            {
+                                label: `مسیر تحول تورم (مهار سالانه: ${inflationDropRate.toFixed(1)} واحد)`,
+                                data: allData.map((d, i) => (i < historicalInflationData.length - 1) ? d : d),
+                                borderColor: '#ef4444', // Forecast color
+                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                borderWidth: 3,
+                                pointRadius: 5,
+                                tension: 0.4,
+                                segment: {
+                                    // Make historical path blue and forecast path dashed red
+                                    borderColor: ctx => ctx.p0DataIndex < historicalInflationData.length - 1 ? '#3b82f6' : '#ef4444',
+                                    borderDash: ctx => ctx.p0DataIndex < historicalInflationData.length - 1 ? [] : [5, 5],
+                                    backgroundColor: ctx => ctx.p0DataIndex < historicalInflationData.length - 1 ? 'rgba(59, 130, 246, 0.2)' : 'rgba(239, 68, 68, 0.1)',
+                                }
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                rtl: true,
+                            },
+                            tooltip: { rtl: true },
+                        },
+                        scales: {
+                            y: {
+                                title: { display: true, text: 'نرخ تورم (درصد)' },
+                                min: 0,
+                                max: 55,
+                            },
+                            x: {
+                                title: { display: true, text: 'سال (خورشیدی)' },
+                            }
+                        },
+                    }
+                });
+
+                // Cleanup function
+                return () => {
+                    if (chartInstanceRef.current) {
+                        chartInstanceRef.current.destroy();
+                    }
+                };
+            }, []); // Empty dependency array means this runs only on mount
+
+            // Effect to update chart when slider changes
+            useEffect(() => {
+                updateChart(inflationDropRate);
+            }, [inflationDropRate]);
+
+            const handleSliderChange = (e) => {
+                const newRate = parseFloat(e.target.value);
+                setInflationDropRate(newRate);
+            };
 
             return (
                 <div className="space-y-8 pt-8 animate-fade-in">
                     <h3 className="text-xl font-bold text-slate-800 border-r-4 border-brand-600 pr-3">۳. مدل‌سازی روند تحول (Core Transition Model)</h3>
-                    <p className="text-slate-500">مسیر مدل‌سازی شده حرکت از رکود و تورم به رونق پایدار (۱۴۰۳ تا ۱۴۰۷).</p>
+                    <p className="text-slate-500">مسیر مدل‌سازی شده حرکت از تورم مزمن (۴۶٪) به هدف پایدار (۸-۶٪)، نیازمند کنترل قوی کسری بودجه و اصلاحات ساختاری است.</p>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <TimelineChart 
-                            title="مسیر مهار پایدار تورم (درصد)" 
-                            data={inflationPath} 
-                            color="blue" 
-                            unit="٪"
-                            start={46}
-                            target={7}
-                        />
-                        <TimelineChart 
-                            title="مدل رشد اقتصادی S-Curve (درصد)" 
-                            data={growthPath} 
-                            color="green" 
-                            unit="٪"
-                            start={0.5}
-                            target={6}
-                        />
+                    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xl">
+                        <h4 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                            <Icon name="BarChart4" size={20} className="text-brand-500" />
+                            شبیه‌ساز مسیر مهار پایدار تورم (تعاملی)
+                        </h4>
+
+                        {/* Interactive Control Panel */}
+                        <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <label htmlFor="dropRate" className="block text-lg font-medium text-gray-700 mb-3 text-right">
+                                قدرت اجرای اصلاحات و مهار سالانه تورم (واحد درصد):
+                                <span id="rateValue" className="text-brand-600 font-bold mr-2">
+                                    {inflationDropRate.toFixed(1)} واحد
+                                </span>
+                            </label>
+                            <input 
+                                type="range" 
+                                id="dropRate" 
+                                min="1" 
+                                max="15" 
+                                step="0.5" 
+                                value={inflationDropRate}
+                                onChange={handleSliderChange}
+                                className="w-full h-2 bg-brand-200 rounded-lg appearance-none cursor-pointer"
+                            />
+                            <div className="flex justify-between text-sm text-gray-500 mt-2">
+                                <span>۱ واحد (اصلاحات ضعیف)</span>
+                                <span>۸ واحد (اصلاحات متوسط)</span>
+                                <span>۱۵ واحد (اصلاحات بنیادین قوی)</span>
+                            </div>
+                        </div>
+                        
+                        {/* Chart Canvas */}
+                        <div className="relative h-80">
+                            <canvas id={CHART_ID} ref={chartRef}></canvas>
+                        </div>
+                        
                     </div>
                     
-                    <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-lg">
-                        <h4 className="text-lg font-bold text-slate-800 mb-4">مدل ریاضی/گرافیکی کسری بودجه</h4>
-                        <p className="text-sm text-slate-600 mb-4">تأمین مالی کسری بودجه در سال‌های اولیه (۱۴۰۳-۱۴۰۴) بر روش‌های غیرتورمی (فروش زمین، اوراق) متکی است و به مرور جای خود را به درآمدهای پایدار مالیاتی و یارانه‌ای می‌دهد.</p>
-                        <JobCounter jobsPerYear={1100000} />
-                        <div className="mt-4 text-xs text-slate-400">
-                             
+                    {/* Job Counter & Model Explanation */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="p-6 bg-slate-50 rounded-xl shadow-inner border border-slate-200">
+                            <div className="flex items-center gap-4 mb-4">
+                                <Icon name="Briefcase" size={28} className="text-brand-600" />
+                                <h4 className="text-xl font-bold text-slate-800">شمارنده تجمعی اشتغال خالص (مدل رشد ۶٪)</h4>
+                            </div>
+                            <p className="text-xs text-slate-500 mb-4">تحقق رشد ۶٪ پایدار از طریق اصلاح محیط کسب و کار، منجر به ایجاد سالانه ۱.۱ میلیون شغل خالص می‌شود.</p>
+                            
+                            <div className="text-center">
+                                <span className="text-5xl font-extrabold text-green-600">
+                                    <span id="jobCounterValue">{new Intl.NumberFormat('fa-IR').format(1100000 * 4)}</span>
+                                </span>
+                                <span className="text-2xl text-green-500"> شغل</span>
+                                <p className="text-sm text-slate-500 mt-1">تعداد کل مشاغل خالص ایجاد شده در ۴ سال</p>
+                            </div>
+                        </div>
+
+                        <div className="p-6 bg-brand-50 rounded-xl shadow-inner border border-brand-200">
+                            <h4 className="text-xl font-bold text-brand-800 mb-3">مدل تأمین مالی کسری بودجه</h4>
+                            <ul className="text-sm text-slate-700 space-y-2 list-disc pr-5">
+                                <li>**سال‌های اولیه (۱۴۰۳-۱۴۰۴):** تمرکز بر منابع **غیرتورمی** (فروش زمین، اوراق، دارایی دولتی) برای کنترل فوری نقدینگی.</li>
+                                <li>**سال‌های پایانی (از ۱۴۰۵):** جایگزینی منابع نفتی با درآمدهای **پایدار** مالیاتی (اصلاح نظام مالیاتی) و عادلانه‌سازی یارانه‌ها.</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
@@ -453,7 +461,7 @@
                 <div className="space-y-8 pt-8 animate-fade-in">
                     <h3 className="text-xl font-bold text-slate-800 border-r-4 border-accent-gold pr-3">۴. اثر بر اقتصاد خانواده و توان خرید</h3>
                     <p className="text-slate-500">تمرکز بر مدل فقرزدایی غیرتورمی (UBI) و حفاظت از قدرت خرید ریال.</p>
-
+                    
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {/* UBI Calculator */}
                         <div className="bg-gradient-to-br from-brand-900 to-slate-800 rounded-3xl p-6 text-white shadow-2xl">
@@ -461,7 +469,7 @@
                                 <Icon name="DollarSign" size={24} />
                                 مدل درآمد پایه همگانی (UBI)
                             </h4>
-                            <p className="text-sm text-brand-100 mb-6">این مبلغ از محل توزیع عادلانه یارانه‌های انرژی (توکن انرژی) تامین می‌شود و کاملاً «غیرتورمی» است.</p>
+                            <p className="text-sm text-brand-100 mb-6">به هر ایرانی سهمیه رایگان انرژی معادل ۳۰ دلار در ماه اعطا می‌شود. این طرح کاملاً «غیرتورمی» است.</p>
                             
                             <div className="flex flex-col gap-6">
                                 <div>
@@ -478,10 +486,6 @@
                                         <span className="text-brand-100 font-medium">درآمد پایه ماهانه (دلاری):</span>
                                         <span className="text-3xl font-extrabold text-accent-gold">${new Intl.NumberFormat('fa-IR').format(familySize * ubiPerPerson)}</span>
                                     </div>
-                                    <div className="flex justify-between items-center border-b border-white/10 pb-3">
-                                        <span className="text-brand-100 font-medium">معادل ریالی (تقریبی):</span>
-                                        <span className="text-2xl font-bold text-brand-100">بر اساس نرخ بازار</span>
-                                    </div>
                                     <div className="flex justify-between items-center pt-2">
                                         <span className="text-brand-100 font-medium">هدف ریشه‌کنی فقر مطلق:</span>
                                         <span className="text-2xl font-bold text-green-400">صفر نفر!</span>
@@ -489,7 +493,7 @@
                                 </div>
                             </div>
                             <div className="mt-6 text-xs text-brand-300">
-                                
+                                مکانیسم: اعطای سهمیه انرژی (توکن) به هر ایرانی، قابل تبدیل به پول نقد در بازار متشکل انرژی.
                             </div>
                         </div>
 
@@ -497,9 +501,9 @@
                         <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xl">
                             <h4 className="text-xl font-bold mb-4 flex items-center gap-2 text-slate-800">
                                 <Icon name="Gauge" size={24} className="text-red-500" />
-                                نمودار مقایسه تورم و قدرت خرید
+                                حفاظت از قدرت خرید
                             </h4>
-                            <p className="text-sm text-slate-500 mb-6">تورم بالای ۱۸٪ قدرت خرید را ذوب می‌کند؛ کاهش پایدار تورم، مهم‌ترین عامل حفظ ارزش ریال است.</p>
+                            <p className="text-sm text-slate-500 mb-6">تورم بالای ۱۸٪ قدرت خرید را ذوب می‌کند. کاهش پایدار تورم، مهم‌ترین عامل حفظ ارزش ریال است.</p>
 
                             <div className="space-y-6">
                                 {/* Current Subsidy Status */}
@@ -511,7 +515,7 @@
                                     <div className="h-3 bg-red-200 rounded-full overflow-hidden">
                                         <div className="h-full bg-red-500 w-[4%] transition-all duration-1000" style={{ width: '4%' }}></div>
                                     </div>
-                                    <p className="text-xs text-red-500 mt-1">شروع: ۴۵ دلار. پایان: ذوب شدن به دلیل تورم مزمن (مالیات ظالمانه).</p>
+                                    <p className="text-xs text-red-500 mt-1">نتیجه تورم مزمن: ذوب شدن ارزش (از ۴۵ دلار به حدود ۲ دلار).</p>
                                 </div>
 
                                 {/* UBI Target Status (Stabilized) */}
@@ -523,7 +527,7 @@
                                     <div className="h-3 bg-green-200 rounded-full overflow-hidden">
                                         <div className="h-full bg-green-500 w-[95%] transition-all duration-1000" style={{ width: '95%' }}></div>
                                     </div>
-                                    <p className="text-xs text-green-500 mt-1">حفظ ارزش: تضمین ارزش دلاری به دلیل تأمین از منابع ارزی انرژی و مهار تورم.</p>
+                                    <p className="text-xs text-green-500 mt-1">حفظ ارزش: تضمین ارزش دلاری به دلیل تأمین از منابع ارزی و مهار پایدار تورم.</p>
                                 </div>
                             </div>
                         </div>
@@ -654,17 +658,51 @@
             const [activeTab, setActiveTab] = useState(sections[0].id);
             const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
             
-            // Simplified navigation for a single-page dashboard
-            const scrollToSection = (id) => {
+            // Function to handle scroll and update active tab
+            const handleScroll = () => {
+                const scrollPosition = window.scrollY + 100; // Add offset for fixed header
+                let currentActive = activeTab;
+
+                sections.forEach(section => {
+                    const element = document.getElementById(section.id);
+                    if (element) {
+                        if (scrollPosition >= element.offsetTop && scrollPosition < element.offsetTop + element.offsetHeight) {
+                            currentActive = section.id;
+                        }
+                    }
+                });
+
+                if (currentActive !== activeTab) {
+                    setActiveTab(currentActive);
+                }
+            };
+
+            useEffect(() => {
+                window.addEventListener('scroll', handleScroll);
+                // Initial check for hash linking on load
+                const hash = window.location.hash.substring(1);
+                if (hash && sections.find(s => s.id === hash)) {
+                    scrollToSection(hash, 0); // Jump to section without smooth scroll initially
+                } else {
+                     handleScroll(); // Check starting position
+                }
+                return () => window.removeEventListener('scroll', handleScroll);
+            }, []);
+            
+            const scrollToSection = (id, behavior = 'smooth') => {
                 const element = document.getElementById(id);
                 if (element) {
-                    element.scrollIntoView({ behavior: 'smooth' });
+                    // Use a slightly delayed scroll to account for the fixed header
+                    window.scroll({
+                        top: element.offsetTop - 70, 
+                        behavior: behavior
+                    });
                     setActiveTab(id);
+                    // Update URL hash for sharing/bookmarking
+                    history.pushState(null, null, `#${id}`);
                 }
             };
             
-            // Component to render the current section
-            const CurrentComponent = sections.find(s => s.id === activeTab)?.Component;
 
             return (
                 <div className="flex min-h-screen bg-slate-50 flex-col">
@@ -673,11 +711,12 @@
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                             <div className="flex justify-between items-center h-16">
                                 {/* Logo/Title */}
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-3 cursor-pointer" onClick={() => scrollToSection('crisis')}>
                                     <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center">
                                         <Icon name="Building2" color="white" size={18} />
                                     </div>
                                     <h1 className="font-extrabold text-xl text-slate-800 hidden md:block">داشبورد بنای ایران</h1>
+                                    <h1 className="font-extrabold text-xl text-slate-800 md:hidden">بنای ایران</h1>
                                 </div>
                                 
                                 {/* Desktop Menu */}
@@ -693,7 +732,7 @@
                                             }`}
                                         >
                                             <Icon name={item.icon} size={16} />
-                                            <span>{item.label}</span>
+                                            <span>{item.label.split('.')[1].trim()}</span>
                                         </button>
                                     ))}
                                 </nav>
@@ -707,7 +746,7 @@
                         
                         {/* Mobile Menu Dropdown */}
                         {isMobileMenuOpen && (
-                            <div className="md:hidden bg-white shadow-xl py-2 border-t border-slate-100 absolute w-full">
+                            <div className="md:hidden bg-white shadow-xl py-2 border-t border-slate-100 absolute w-full z-20">
                                 {sections.map(item => (
                                     <button
                                         key={item.id}
@@ -733,7 +772,8 @@
                                 <section 
                                     key={section.id} 
                                     id={section.id} 
-                                    className="pt-16 pb-12 border-b border-slate-200"
+                                    // Use padding top/bottom for section spacing instead of fixed pt-16
+                                    className="pt-10 pb-12 border-b border-slate-200"
                                 >
                                     <section.Component />
                                 </section>
@@ -750,8 +790,14 @@
             );
         };
 
+        // Firebase boilerplate (required for Canvas environment, even if not used)
+        const initFirebase = async () => {
+             // We do not need heavy Firebase logic for this dashboard, but keeping the setup minimal is necessary.
+        };
+
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
+        initFirebase();
     </script>
 </body>
 </html>
