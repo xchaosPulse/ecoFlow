@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>داشبورد طرح اقتصادی بنای ایران (۱۴۰۳-۱۴۰۶)</title>
+    <title>داشبورد طرح اقتصادی بنای ایران (۱۴۰۳-۱۴۰۷)</title>
     
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100;300;400;500;700;900&display=swap" rel="stylesheet">
@@ -49,11 +49,12 @@
             font-family: 'Vazirmatn', sans-serif;
             background-color: #f8fafc;
         }
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         /* Custom Scrollbar */
         ::-webkit-scrollbar {
@@ -69,12 +70,16 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #94a3b8; 
         }
-        .animate-fade-in {
-            animation: fadeIn 0.5s ease-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        /* Style for the fixed timeline marker */
+        .timeline-marker {
+            position: absolute;
+            right: -13px;
+            top: 20px;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            border: 5px solid white;
+            z-index: 10;
         }
     </style>
 </head>
@@ -84,8 +89,7 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // --- Icons Data (Self-contained to avoid library errors) ---
-        // Wrap adjacent JSX elements in Fragments <>...</>
+        // --- Icons Data (Self-contained, all wrapped in Fragments) ---
         const iconsData = {
             LayoutDashboard: <><rect width="7" height="9" x="3" y="3" rx="1" /><rect width="7" height="5" x="14" y="3" rx="1" /><rect width="7" height="9" x="14" y="12" rx="1" /><rect width="7" height="5" x="3" y="16" rx="1" /></>,
             Map: <><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" /><line x1="9" x2="9" y1="3" y2="18" /><line x1="15" x2="15" y1="6" y2="21" /></>,
@@ -96,16 +100,16 @@
             Percent: <><line x1="19" x2="5" y1="5" y2="19" /><circle cx="6.5" cy="6.5" r="2.5" /><circle cx="17.5" cy="17.5" r="2.5" /></>,
             Wallet: <><path d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5Zm-6 0h6" /></>,
             Ship: <><path d="M2 21c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1" /><path d="M19.38 20A11.6 11.6 0 0 0 21 14l-9-4-9 4c0 2.9.9 5.8 2.38 6" /><path d="M12 10V4" /><path d="M8 8v1" /><path d="M16 8v1" /></>,
-            AlertTriangle: <><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><line x1="12" x2="12" y1="9" y2="13" /><line x1="12" x2="12.01" y1="17" y2="17" /></>,
-            ArrowLeft: <><line x1="19" x2="5" y1="12" y2="12" /><polyline points="12 19 5 12 12 5" /></>,
-            CheckCircle2: <><circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" /></>,
-            HardHat: <><path d="M2 18a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v2z" /><path d="M10 10V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5" /><path d="M4 15v-3a6 6 0 0 1 6-6h0" /><path d="M14 6h0a6 6 0 0 1 6 6v3" /></>,
-            TrendingDown: <><polyline points="22 17 13.5 8.5 8.5 13.5 2 7" /><polyline points="16 17 22 17 22 11" /></>,
-            HeartHandshake: <><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /><path d="M12 5 9.04 7.96a2.17 2.17 0 0 0 0 3.08v0c.82.82 2.13.85 3 .07l2.07-1.9a2.82 2.82 0 0 1 3.79 0l2.96 2.66" /><path d="M18 15v2.25" /><path d="M21 15V12" /></>,
-            ShieldAlert: <><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" /><line x1="12" x2="12" y1="8" y2="12" /><line x1="12" x2="12.01" y1="16" y2="16" /></>,
-            Globe: <><circle cx="12" cy="12" r="10" /><line x1="2" x2="22" y1="12" y2="12" /><path d="a15.3 15.3 0 0 1 4-10 15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10" /></>,
+            Shield: <><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" /><path d="m9 12 2 2 4-4" /></>,
+            BarChart4: <><path d="M3 3v18h18" /><path d="M7 17V10" /><path d="M12 17V14" /><path d="M17 17V8" /></>,
+            Briefcase: <><rect width="20" height="14" x="2" y="7" rx="2" ry="2" /><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" /></>,
+            X: <><path d="M18 6 6 18" /><path d="m6 6 12 12" /></>,
             Menu: <><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="18" y2="18" /></>,
-            X: <><path d="M18 6 6 18" /><path d="m6 6 12 12" /></>
+            Zap: <><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></>,
+            Handshake: <><path d="M11 17L2 22l1-4 10-10 4 1-5 5" /><path d="m14 10 7-7" /><path d="M8 18h.01" /><path d="M18 13.5V10l3-3 1-4" /></>,
+            DollarSign: <><line x1="12" x2="12" y1="2" y2="22" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></>,
+            Gauge: <><path d="M12 14c1.1 0 2-.9 2-2s-.9-2-2-2" /><path d="M21.5 10c-.8-2.6-2.9-4.8-5.7-5.5" /><path d="M2 12h2" /><path d="M20 12h2" /><path d="M17 21a1.2 1.2 0 0 0-2-2" /><path d="M12 2a10 10 0 1 0 0 20 10 10 0 1 0 0-20" /><path d="M4.5 10c.8-2.6 2.9-4.8 5.7-5.5" /></>,
+            Hourglass: <><path d="M5 21v-3.5a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4V21" /><path d="M2 21h20" /><path d="M2 3h20" /><path d="M17 3v3.5a4 4 0 0 0-4 4H7a4 4 0 0 0-4-4V3" /></>
         };
 
         // Icon Component
@@ -132,390 +136,394 @@
             );
         };
 
-        // Custom Line Chart Component (SVG based for lightness)
-        const TrendChart = ({ data, color, title, unit }) => {
-            const maxVal = Math.max(...data.map(d => d.value));
-            const minVal = Math.min(...data.map(d => d.value));
-            const height = 150;
-            const width = 100; // Percentage
+        // Custom Gauge Chart (for Crisis Snapshot)
+        const GaugeChart = ({ value, max, label, colorClass, iconName, unit, startLabel, endLabel }) => {
+            const normalizedValue = Math.min(Math.max(value, 0), max);
+            const percentage = (normalizedValue / max);
+            // 240 degrees sweep (from -120 to +120)
+            const angle = percentage * 240 - 120;
+            const needleTransform = `rotate(${angle})`;
             
-            // Normalize points
-            const points = data.map((d, i) => {
-                const x = (i / (data.length - 1)) * 100;
-                // Inverse Y because SVG starts from top
-                const y = 100 - ((d.value - 0) / (maxVal * 1.2)) * 100; 
-                return `${x},${y}`;
-            }).join(' ');
+            // Text color based on value position (Crisis vs Target)
+            const valueColor = value > max * 0.5 ? 'text-red-600' : 'text-green-600';
 
             return (
-                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                    <div className="flex justify-between items-center mb-4">
-                        <h4 className="text-sm font-bold text-slate-700">{title}</h4>
-                        <span className={`text-xs font-bold px-2 py-1 rounded bg-${color}-100 text-${color}-700`}>
-                            هدف: {data[data.length-1].value} {unit}
-                        </span>
+                <div className="flex flex-col items-center bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+                    <div className={`p-3 rounded-xl bg-opacity-10 ${colorClass.replace('text-', 'bg-')} mb-4`}>
+                        <Icon name={iconName} size={24} className={colorClass} />
                     </div>
-                    <div className="relative h-40 w-full">
-                        <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="h-full w-full overflow-visible">
-                            {/* Grid Lines */}
-                            <line x1="0" y1="25" x2="100" y2="25" stroke="#e2e8f0" strokeWidth="0.5" strokeDasharray="2" />
-                            <line x1="0" y1="50" x2="100" y2="50" stroke="#e2e8f0" strokeWidth="0.5" strokeDasharray="2" />
-                            <line x1="0" y1="75" x2="100" y2="75" stroke="#e2e8f0" strokeWidth="0.5" strokeDasharray="2" />
-                            
-                            {/* The Line */}
-                            <polyline
+                    
+                    <h3 className="text-slate-500 text-sm font-medium mb-4 text-center">{label}</h3>
+
+                    <div className="relative w-32 h-16 mb-2">
+                        <svg viewBox="0 0 100 50" className="w-full h-full overflow-hidden">
+                            {/* Background Arc */}
+                            <path
+                                d="M 5 50 A 45 45 0 0 1 95 50"
                                 fill="none"
-                                stroke={color === 'red' ? '#ef4444' : color === 'green' ? '#22c55e' : '#3b82f6'}
-                                strokeWidth="2"
-                                points={points}
-                                vectorEffect="non-scaling-stroke"
+                                stroke="#e2e8f0"
+                                strokeWidth="5"
                             />
-                            
-                            {/* Area under curve (optional opacity) */}
-                            <polygon
-                                fill={color === 'red' ? '#ef4444' : color === 'green' ? '#22c55e' : '#3b82f6'}
-                                fillOpacity="0.1"
-                                points={`0,100 ${points} 100,100`}
+                            {/* Value Arc (The color changes based on the value) */}
+                            <path
+                                d="M 5 50 A 45 45 0 0 1 95 50"
+                                fill="none"
+                                stroke={colorClass.replace('text-', '#').replace('red', 'ef4444').replace('green', '22c55e').replace('blue', '3b82f6')}
+                                strokeWidth="5"
+                                strokeDasharray={2 * Math.PI * 45 * (240 / 360)}
+                                strokeDashoffset={(2 * Math.PI * 45 * (240 / 360)) * (1 - percentage)}
+                                style={{ transition: 'stroke-dashoffset 1s ease-out', transformOrigin: 'center center' }}
                             />
 
-                            {/* Data Points */}
-                            {data.map((d, i) => {
-                                const x = (i / (data.length - 1)) * 100;
-                                const y = 100 - ((d.value - 0) / (maxVal * 1.2)) * 100;
-                                return (
-                                    <g key={i}>
-                                        <circle cx={x} cy={y} r="1.5" fill="white" stroke="currentColor" className="text-slate-500" strokeWidth="0.5" />
-                                        <text x={x} y={y - 5} fontSize="4" textAnchor="middle" fill="#64748b">{d.value}</text>
-                                        <text x={x} y="115" fontSize="4" textAnchor="middle" fill="#94a3b8">{d.year}</text>
-                                    </g>
-                                )
-                            })}
+                            {/* Needle */}
+                            <g style={{ transform: `${needleTransform}`, transformOrigin: '50% 50%', transition: 'transform 1s ease-out' }}>
+                                <line x1="50" y1="50" x2="50" y2="10" stroke="#1e293b" strokeWidth="2" strokeLinecap="round" />
+                                <circle cx="50" cy="50" r="3" fill="#1e293b" />
+                            </g>
                         </svg>
+                        <div className="absolute top-1/2 left-0 right-0 transform -translate-y-1/2 flex justify-between text-xs font-bold text-slate-500 px-1">
+                            <span>{startLabel}</span>
+                            <span>{endLabel}</span>
+                        </div>
+                    </div>
+
+                    <div className={`text-3xl font-extrabold ${valueColor} mt-4`}>
+                        {value.toFixed(value % 1 !== 0 ? 1 : 0)}{unit}
+                    </div>
+                    <div className="text-xs text-slate-400 mt-1">مقدار فعلی (۱۴۰۲)</div>
+                </div>
+            );
+        };
+
+        // Section 1: Crisis Snapshot & The 5 Commitments
+        const CrisisSnapshot = () => {
+            const crisisGauges = [
+                { label: "تورم مزمن", value: 46, max: 75, unit: "%", colorClass: "text-red-600", iconName: "Percent", startLabel: "کم (۸%)", endLabel: "بحران (۷۵%)" },
+                { label: "رشد اقتصادی", value: 0.5, max: 6, unit: "%", colorClass: "text-red-600", iconName: "TrendingDown", startLabel: "رکود", endLabel: "رونق (۶%)" },
+                { label: "جمعیت زیر فقر مطلق", value: 25.6, max: 30, unit: "م.نفر", colorClass: "text-red-600", iconName: "Users", startLabel: "صفر", endLabel: "بحران" },
+                { label: "بار تکفل (به ازای هر شاغل)", value: 2.5, max: 3.5, unit: "نفر", colorClass: "text-red-600", iconName: "Handshake", startLabel: "۱", endLabel: "۳.۵+" },
+            ];
+
+            const commitments = [
+                { title: "مهار پایدار تورم", target: "۸-۶٪", icon: "Percent", color: "blue", desc: "رساندن تورم به میانگین خاورمیانه." },
+                { title: "رشد اشتغال‌زا", target: "+۱.۱ م/سال", icon: "Briefcase", color: "green", desc: "تحقق رشد ۶ درصدی با ایجاد ۱.۱ میلیون شغل خالص." },
+                { title: "فقرزدایی غیرتورمی", target: "$۳۰ ماهانه UBI", icon: "DollarSign", color: "amber", desc: "تضمین درآمد پایه همگانی (UBI) برای هر ایرانی." },
+                { title: "مقابله با فساد", target: "رتبه میانگین MEA", icon: "Shield", color: "purple", desc: "رساندن شاخص ادراک فساد به سطح کشورهای منطقه." },
+                { title: "ارتقای بین‌المللی", target: "+۱۰۰٪ صادرات", icon: "Ship", color: "sky", desc: "رشد ۱۰۰٪ نسبت صادرات غیرنفتی به تولید ناخالص داخلی." },
+            ];
+
+            return (
+                <div className="space-y-10 animate-fade-in">
+                    {/* Section Title */}
+                    <div className="bg-brand-600 p-6 rounded-3xl text-white shadow-xl">
+                        <h2 className="text-3xl font-extrabold mb-2">بنای ایران: بسته نجات اقتصادی (۱۴۰۳-۱۴۰۷)</h2>
+                        <p className="text-brand-100">تحول پایدار اقتصاد ایران بر پایه پنج هدف سیاستی کلیدی.</p>
+                    </div>
+
+                    {/* Crisis Gauges */}
+                    <h3 className="text-xl font-bold text-slate-800 border-r-4 border-red-500 pr-3">۱. وضعیت کنونی: بحران و فوریت اقدام</h3>
+                    <p className="text-slate-500">وضعیت کنونی (سال ۱۴۰۲) نشان‌دهنده رکود عمیق، تورم مزمن و فشار معیشتی بی‌سابقه است.</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {crisisGauges.map((gauge, idx) => (
+                            <GaugeChart key={idx} {...gauge} />
+                        ))}
+                    </div>
+                    <div className="bg-red-50 border-r-4 border-red-500 p-4 rounded-lg text-sm text-red-800 font-medium">
+                        *مقایسه: میانگین تورم جهانی در دوره ۲۰۰۹-۲۰۱۸ حدود ۱۸٪ بوده است. تورم ۴۶٪ ایران در سال ۱۴۰۲، ۲.۵ برابر این میانگین است.
+                        
+                    </div>
+                    
+
+                    {/* 5 Commitments */}
+                    <h3 className="text-xl font-bold text-slate-800 border-r-4 border-brand-500 pr-3 pt-6">۲. اهداف پنج‌گانه سیاستی (خروجی مدل‌سازی)</h3>
+                    <p className="text-slate-500">اهداف قابل سنجش و مدل‌سازی شده برای دوره چهار ساله.</p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                        {commitments.map((item, idx) => (
+                            <div key={idx} className="p-4 bg-white rounded-xl border border-slate-100 text-center shadow-sm">
+                                <div className={`w-10 h-10 mx-auto mb-3 flex items-center justify-center rounded-full bg-${item.color}-500 bg-opacity-10 text-${item.color}-600`}>
+                                    <Icon name={item.icon} size={20} />
+                                </div>
+                                <h4 className="text-base font-bold text-slate-800">{item.title}</h4>
+                                <p className={`text-sm font-extrabold text-${item.color}-600 mt-1`}>{item.target}</p>
+                                <p className="text-xs text-slate-500 mt-2">{item.desc}</p>
+                            </div>
+                        ))}
                     </div>
                 </div>
             );
         };
 
-        // Navigation
-        const Sidebar = ({ activeTab, setActiveTab }) => {
-            const menuItems = [
-                { id: 'dashboard', label: 'داشبورد مدیریتی', icon: 'LayoutDashboard' },
-                { id: 'roadmap', label: 'نقشه راه اجرایی', icon: 'Map' },
-                { id: 'pillars', label: 'ستون‌های سیاستی', icon: 'Columns' },
-                { id: 'simulation', label: 'شبیه‌ساز خانوار', icon: 'TrendingUp' },
+        // Section 2: Core Transition Model (Inflation and Job Growth)
+        const TransitionModel = () => {
+            // Data for Inflation path (46% -> 15% -> 8%)
+            const inflationPath = [
+                { year: '۱۴۰۲', value: 46 },
+                { year: '۱۴۰۳', value: 30 },
+                { year: '۱۴۰۴', value: 15 },
+                { year: '۱۴۰۵', value: 10 },
+                { year: '۱۴۰۶', value: 8 },
+                { year: '۱۴۰۷', value: 7 },
             ];
 
-            return (
-                <aside className="w-full md:w-64 bg-slate-900 text-white flex-shrink-0 md:h-screen sticky top-0 z-50">
-                    <div className="p-6 border-b border-slate-700">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-brand-500 rounded-lg flex items-center justify-center">
-                                <Icon name="Building2" color="white" />
+            // Data for Economic Growth S-Curve (0.5% -> 6%)
+            const growthPath = [
+                { year: '۱۴۰۲', value: 0.5 },
+                { year: '۱۴۰۳', value: 2.5 }, // Stabilization & initial reform effects
+                { year: '۱۴۰۴', value: 4.0 }, // Deregulation effects
+                { year: '۱۴۰۵', value: 6.0 }, // Target achieved
+                { year: '۱۴۰۶', value: 6.0 }, 
+                { year: '۱۴۰۷', value: 6.0 },
+            ];
+            
+            const JobCounter = ({ jobsPerYear }) => {
+                const totalYears = 4;
+                const totalJobs = jobsPerYear * totalYears;
+                
+                // Animated Job Counter (Simple cumulative visualization)
+                const [currentJobs, setCurrentJobs] = useState(0);
+
+                useEffect(() => {
+                    let start = 0;
+                    const end = totalJobs;
+                    const duration = 2000;
+                    const startTimestamp = performance.now();
+
+                    const step = (timestamp) => {
+                        const elapsed = timestamp - startTimestamp;
+                        const progress = Math.min(elapsed / duration, 1);
+                        setCurrentJobs(Math.floor(progress * end));
+                        if (progress < 1) {
+                            requestAnimationFrame(step);
+                        }
+                    };
+
+                    requestAnimationFrame(step);
+                    // Reset on unmount/re-render if needed
+                    return () => setCurrentJobs(0);
+                }, []);
+                
+                const jobProgress = (currentJobs / totalJobs) * 100;
+
+                return (
+                    <div className="p-6 bg-slate-50 rounded-xl shadow-inner border border-slate-200">
+                        <div className="flex items-center gap-4 mb-4">
+                            <Icon name="Users" size={28} className="text-brand-600" />
+                            <h4 className="text-xl font-bold text-slate-800">شمارنده تجمعی اشتغال خالص</h4>
+                        </div>
+                        <p className="text-xs text-slate-500 mb-4">هدف: ایجاد ۱.۱ میلیون شغل خالص در هر سال (مجموع ۴ سال).</p>
+                        
+                        <div className="text-center">
+                             <span className="text-5xl font-extrabold text-green-600">
+                                {new Intl.NumberFormat('fa-IR').format(currentJobs)}
+                            </span>
+                            <span className="text-2xl text-green-500"> شغل</span>
+                            <p className="text-sm text-slate-500 mt-1">تعداد کل مشاغل خالص ایجاد شده در دوره</p>
+                        </div>
+
+                        <div className="mt-6">
+                            <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                                <div className="h-full bg-green-500 rounded-full transition-all duration-1000" style={{ width: `${jobProgress}%` }}></div>
                             </div>
-                            <div>
-                                <h1 className="font-bold text-lg">بنای ایران</h1>
-                                <p className="text-xs text-slate-400">۱۴۰۳ - ۱۴۰۶</p>
+                            <div className="flex justify-between text-xs text-slate-500 mt-1">
+                                <span>شروع: ۰</span>
+                                <span>هدف: {new Intl.NumberFormat('fa-IR').format(totalJobs)}</span>
                             </div>
                         </div>
                     </div>
-                    <nav className="p-4 space-y-2">
-                        {menuItems.map(item => (
-                            <button
-                                key={item.id}
-                                onClick={() => setActiveTab(item.id)}
-                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                                    activeTab === item.id 
-                                    ? 'bg-brand-600 text-white shadow-lg shadow-brand-900/20' 
-                                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-                                }`}
-                            >
-                                <Icon name={item.icon} size={18} />
-                                <span className="text-sm font-medium">{item.label}</span>
-                            </button>
-                        ))}
-                    </nav>
-                    
-                    <div className="absolute bottom-0 w-full p-6 bg-slate-950">
-                         <p className="text-xs text-slate-500 leading-relaxed text-justify">
-                            «یستدل علی ادبار الدول باربع: تضییع الاصول، والتمسک بالفروع، و تقدیم الاراذل، و تأخیر الافاضل»
-                            <br/>
-                            <span className="block mt-2 text-slate-600">- امام علی (ع)</span>
-                         </p>
+                );
+            };
+
+            const TimelineChart = ({ data, color, title, unit, start, end, target }) => {
+                const height = 150;
+                const padding = 10;
+                const maxVal = Math.max(...data.map(d => d.value));
+                const minVal = Math.min(...data.map(d => d.value));
+                
+                // Adjust max val slightly for padding at top
+                const displayMax = maxVal * 1.1; 
+                const displayMin = minVal >= 0 ? 0 : minVal * 1.1;
+                const range = displayMax - displayMin;
+
+                // Normalize points
+                const points = data.map((d, i) => {
+                    const x = (i / (data.length - 1)) * 100;
+                    // Inverse Y
+                    const y = 100 - ((d.value - displayMin) / range) * 100; 
+                    return `${x},${y}`;
+                }).join(' ');
+
+                // Calculate target Y position for the goal line
+                const targetY = 100 - ((target - displayMin) / range) * 100;
+
+                return (
+                    <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-lg">
+                        <div className="flex justify-between items-center mb-4">
+                            <h4 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                <Icon name="BarChart4" size={20} className={`text-${color}-500`} />
+                                {title}
+                            </h4>
+                            <span className={`text-xs font-bold px-3 py-1 rounded-full bg-${color}-100 text-${color}-700`}>
+                                هدف: {target}{unit} (۱۴۰۷)
+                            </span>
+                        </div>
+                        
+                        <div className="relative h-40 w-full">
+                            <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="h-full w-full overflow-visible">
+                                {/* Target Line */}
+                                {targetY > 0 && targetY < 100 && (
+                                    <line x1="0" y1={targetY} x2="100" y2={targetY} stroke="#fcd34d" strokeWidth="0.5" strokeDasharray="4 2" />
+                                )}
+                                
+                                {/* The Line */}
+                                <polyline
+                                    fill="none"
+                                    stroke={`#${color === 'red' ? 'ef4444' : color === 'green' ? '22c55e' : '3b82f6'}`}
+                                    strokeWidth="2.5"
+                                    points={points}
+                                    vectorEffect="non-scaling-stroke"
+                                    strokeLinejoin="round"
+                                />
+
+                                {/* Data Points & Labels */}
+                                {data.map((d, i) => {
+                                    const x = (i / (data.length - 1)) * 100;
+                                    const y = 100 - ((d.value - displayMin) / range) * 100;
+                                    const isStart = i === 0;
+                                    const isEnd = i === data.length - 1;
+
+                                    return (
+                                        <g key={i}>
+                                            <circle cx={x} cy={y} r="2" fill="white" stroke="currentColor" className={`text-${color}-500`} strokeWidth="1.5" />
+                                            {/* Value Label */}
+                                            <text x={x} y={y - 5} fontSize="4" textAnchor="middle" fill="#1e293b" fontWeight="bold">{d.value.toFixed(d.value % 1 !== 0 ? 1 : 0)}{unit}</text>
+                                            {/* Year Label */}
+                                            <text x={x} y="105" fontSize="4" textAnchor="middle" fill="#64748b">{d.year}</text>
+                                        </g>
+                                    )
+                                })}
+                            </svg>
+                        </div>
                     </div>
-                </aside>
-            );
-        };
+                );
+            };
 
-        // Section: Dashboard
-        const Dashboard = () => {
-            const stats = [
-                { title: "رشد اشتغال", target: "۱.۱ میلیون", sub: "شغل در سال", progress: 60, color: "bg-emerald-500", icon: "Users" },
-                { title: "نرخ تورم هدف", target: "۸٪", sub: "میانگین خاورمیانه", progress: 85, color: "bg-blue-500", icon: "Percent" },
-                { title: "درآمد پایه", target: "۳۰ دلار", sub: "ماهانه برای هر نفر", progress: 100, color: "bg-amber-500", icon: "Wallet" },
-                { title: "صادرات غیرنفتی", target: "+۱۰۰٪", sub: "نسبت به GDP", progress: 40, color: "bg-purple-500", icon: "Ship" },
-            ];
-
-            const inflationData = [
-                { year: '۱۴۰۲', value: 45 },
-                { year: '۱۴۰۳', value: 35 },
-                { year: '۱۴۰۴', value: 20 },
-                { year: '۱۴۰۵', value: 12 },
-                { year: '۱۴۰۶', value: 8 },
-            ];
-            
-            const jobData = [
-                { year: '۱۴۰۲', value: 0.5 },
-                { year: '۱۴۰۳', value: 1.1 },
-                { year: '۱۴۰۴', value: 2.2 },
-                { year: '۱۴۰۵', value: 3.3 },
-                { year: '۱۴۰۶', value: 4.5 }, // Cumulative roughly
-            ];
 
             return (
-                <div className="space-y-6 animate-fade-in">
-                    <header className="mb-8">
-                        <h2 className="text-2xl font-bold text-slate-800 mb-2">وضعیت کلان اقتصادی</h2>
-                        <p className="text-slate-500">پایش شاخص‌های حیاتی برنامه نجات اقتصاد ایران</p>
-                    </header>
+                <div className="space-y-8 pt-8 animate-fade-in">
+                    <h3 className="text-xl font-bold text-slate-800 border-r-4 border-brand-600 pr-3">۳. مدل‌سازی روند تحول (Core Transition Model)</h3>
+                    <p className="text-slate-500">مسیر مدل‌سازی شده حرکت از رکود و تورم به رونق پایدار (۱۴۰۳ تا ۱۴۰۷).</p>
 
-                    {/* KPI Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {stats.map((stat, idx) => (
-                            <div key={idx} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className={`p-3 rounded-xl ${stat.color} bg-opacity-10`}>
-                                        <Icon name={stat.icon} className={stat.color.replace('bg-', 'text-')} />
-                                    </div>
-                                    <span className="bg-slate-100 text-slate-600 text-xs px-2 py-1 rounded-full">۱۴۰۶</span>
-                                </div>
-                                <h3 className="text-slate-500 text-sm font-medium mb-1">{stat.title}</h3>
-                                <div className="text-2xl font-bold text-slate-800 mb-1">{stat.target}</div>
-                                <div className="text-xs text-slate-400 mb-3">{stat.sub}</div>
-                                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                                    <div className={`h-full ${stat.color} rounded-full`} style={{ width: `${stat.progress}%` }}></div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Charts Row */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-                        <TrendChart 
-                            title="مسیر مهار تورم (درصد)" 
-                            data={inflationData} 
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <TimelineChart 
+                            title="مسیر مهار پایدار تورم (درصد)" 
+                            data={inflationPath} 
                             color="blue" 
                             unit="٪"
+                            start={46}
+                            target={7}
                         />
-                        <TrendChart 
-                            title="رشد تجمعی اشتغال (میلیون نفر)" 
-                            data={jobData} 
+                        <TimelineChart 
+                            title="مدل رشد اقتصادی S-Curve (درصد)" 
+                            data={growthPath} 
                             color="green" 
-                            unit="نفر"
+                            unit="٪"
+                            start={0.5}
+                            target={6}
                         />
                     </div>
-
-                    {/* Crisis Alert Section */}
-                    <div className="bg-red-50 border-r-4 border-red-500 p-6 rounded-lg mt-8 flex flex-col md:flex-row gap-6 items-center">
-                        <div className="flex-1">
-                            <h3 className="text-red-800 font-bold text-lg mb-2 flex items-center gap-2">
-                                <Icon name="AlertTriangle" size={20} />
-                                وضعیت اضطراری: پنجره جمعیتی
-                            </h3>
-                            <p className="text-red-700 text-sm leading-relaxed">
-                                ۱۷ سال از فرصت طلایی پنجره جمعیتی از دست رفته است. تنها ۶ سال تا بسته شدن کامل این پنجره و شروع بحران کهن‌سالی باقیست. عدم اقدام فوری منجر به ابربحران‌های صندوق‌های بازنشستگی خواهد شد.
-                            </p>
-                        </div>
-                        <div className="w-full md:w-1/3 bg-white/50 p-4 rounded-lg text-center">
-                            <span className="block text-3xl font-bold text-red-600 mb-1">۶ سال</span>
-                            <span className="text-xs text-red-800 uppercase font-bold">زمان باقی‌مانده</span>
+                    
+                    <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-lg">
+                        <h4 className="text-lg font-bold text-slate-800 mb-4">مدل ریاضی/گرافیکی کسری بودجه</h4>
+                        <p className="text-sm text-slate-600 mb-4">تأمین مالی کسری بودجه در سال‌های اولیه (۱۴۰۳-۱۴۰۴) بر روش‌های غیرتورمی (فروش زمین، اوراق) متکی است و به مرور جای خود را به درآمدهای پایدار مالیاتی و یارانه‌ای می‌دهد.</p>
+                        <JobCounter jobsPerYear={1100000} />
+                        <div className="mt-4 text-xs text-slate-400">
+                             
                         </div>
                     </div>
                 </div>
             );
         };
 
-        // Section: Roadmap
-        const Roadmap = () => {
-            const phases = [
-                {
-                    year: "۱۴۰۳ (سال اول)",
-                    title: "تثبیت اقتصادی",
-                    theme: "bg-blue-500",
-                    details: [
-                        "تامین کسری بودجه با عرضه زمین‌های شهرهای جدید",
-                        "تفکیک دلارهای نفتی از بودجه جاری",
-                        "آغاز دیپلماسی راه (۱۷۰ پروژه زیرساختی)",
-                        "تجمیع سازمان مالیاتی و تامین اجتماعی"
-                    ]
-                },
-                {
-                    year: "۱۴۰۴ (سال دوم)",
-                    title: "آزادسازی و تولید",
-                    theme: "bg-amber-500",
-                    details: [
-                        "حذف انحصارات و امضاهای طلایی",
-                        "حذف قیمت‌گذاری دستوری",
-                        "انحلال سازمان‌های موازی (تعزیرات)",
-                        "بهبود شاخص سهولت کسب‌وکار"
-                    ]
-                },
-                {
-                    year: "۱۴۰۵-۱۴۰۶ (سال سوم)",
-                    title: "نظام رفاهی نوین",
-                    theme: "bg-emerald-500",
-                    details: [
-                        "راه‌اندازی بازار متشکل انرژی",
-                        "تخصیص سهمیه انرژی به افراد (معادل ۳۰ دلار)",
-                        "استقرار نظام مالیات بر مجموع درآمد (PIT)",
-                        "تثبیت تورم زیر ۱۵ درصد"
-                    ]
-                }
-            ];
-
-            return (
-                <div className="space-y-6 animate-fade-in">
-                    <header>
-                        <h2 className="text-2xl font-bold text-slate-800 mb-2">نقشه راه اجرایی</h2>
-                        <p className="text-slate-500">توالی اقدامات برای گذار از رکود به رونق پایدار</p>
-                    </header>
-
-                    <div className="relative border-r-2 border-slate-200 mr-4 space-y-12 py-4">
-                        {phases.map((phase, idx) => (
-                            <div key={idx} className="relative pr-8 group">
-                                {/* Dot */}
-                                <div className={`absolute -right-[9px] top-6 w-4 h-4 rounded-full border-4 border-white shadow-sm ${phase.theme}`}></div>
-                                
-                                {/* Card */}
-                                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg transition-all cursor-default">
-                                    <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 border-b border-slate-100 pb-4">
-                                        <div>
-                                            <span className={`text-xs font-bold text-white px-3 py-1 rounded-full mb-2 inline-block ${phase.theme}`}>
-                                                {phase.year}
-                                            </span>
-                                            <h3 className="text-xl font-bold text-slate-800">{phase.title}</h3>
-                                        </div>
-                                        <div className="hidden md:block">
-                                           <Icon name="ArrowLeft" className="text-slate-300" /> 
-                                        </div>
-                                    </div>
-                                    
-                                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                        {phase.details.map((detail, dIdx) => (
-                                            <li key={dIdx} className="flex items-start gap-2 text-sm text-slate-600">
-                                                <Icon name="CheckCircle2" size={16} className="text-green-500 mt-1 shrink-0" />
-                                                <span>{detail}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            );
-        };
-
-        // Section: Pillars
-        const Pillars = () => {
-            const pillars = [
-                { title: "رشد اشتغال‌زا", icon: "HardHat", desc: "ایجاد ۱.۱ میلیون شغل با اصلاح محیط کسب‌وکار و توسعه منطقه‌ای." },
-                { title: "مهار پایدار تورم", icon: "TrendingDown", desc: "کنترل نقدینگی، اصلاح ناترازی بانک‌ها و جداسازی نفت از بودجه." },
-                { title: "فقرزدایی غیرتورمی", icon: "HeartHandshake", desc: "درآمد پایه همگانی (UBI) از محل عادلانه‌سازی یارانه انرژی." },
-                { title: "مقابله با فساد", icon: "ShieldAlert", desc: "حذف امضاهای طلایی، ارز چندنرخی و تعارض منافع." },
-                { title: "ارتقای بین‌المللی", icon: "Globe", desc: "دیپلماسی راه، اتصال به جاده ابریشم و توسعه صادرات غیرنفتی." },
-            ];
-
-            return (
-                <div className="animate-fade-in">
-                    <header className="mb-8">
-                        <h2 className="text-2xl font-bold text-slate-800 mb-2">ستون‌های پنج‌گانه سیاستی</h2>
-                        <p className="text-slate-500">تحلیل عمیق محورهای اصلی تحول</p>
-                    </header>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {pillars.map((item, idx) => (
-                            <div key={idx} className="bg-white p-6 rounded-xl border border-slate-200 hover:border-brand-200 transition-colors">
-                                <div className="w-12 h-12 bg-slate-50 rounded-lg flex items-center justify-center mb-4 text-brand-600">
-                                    <Icon name={item.icon} size={24} />
-                                </div>
-                                <h3 className="text-lg font-bold text-slate-800 mb-2">{item.title}</h3>
-                                <p className="text-slate-600 text-sm leading-relaxed">{item.desc}</p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            );
-        };
-
-        // Section: Household Simulation
-        const Simulation = () => {
+        // Section 3: Household Impact (UBI and Purchasing Power)
+        const HouseholdImpact = () => {
             const [familySize, setFamilySize] = useState(4);
-            // 30 USD * 60,000 Tomans (Estimated future rate for calculation base) roughly 1.8m toman per person? 
-            // Let's use generic units or dollar equivalent as per text. Text says 30 USD.
-            const ubiPerPerson = 30; 
-            
-            return (
-                <div className="animate-fade-in space-y-8">
-                     <header>
-                        <h2 className="text-2xl font-bold text-slate-800 mb-2">شبیه‌ساز وضعیت خانوار</h2>
-                        <p className="text-slate-500">تاثیر طرح درآمد پایه همگانی (انرژی) بر درآمد خانواده شما</p>
-                    </header>
+            const ubiPerPerson = 30; // $30 per person per month
 
-                    <div className="bg-gradient-to-br from-brand-900 to-slate-900 rounded-3xl p-8 text-white shadow-2xl">
-                        <div className="flex flex-col md:flex-row gap-8 items-center">
-                            <div className="flex-1 space-y-6 w-full">
+            return (
+                <div className="space-y-8 pt-8 animate-fade-in">
+                    <h3 className="text-xl font-bold text-slate-800 border-r-4 border-accent-gold pr-3">۴. اثر بر اقتصاد خانواده و توان خرید</h3>
+                    <p className="text-slate-500">تمرکز بر مدل فقرزدایی غیرتورمی (UBI) و حفاظت از قدرت خرید ریال.</p>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* UBI Calculator */}
+                        <div className="bg-gradient-to-br from-brand-900 to-slate-800 rounded-3xl p-6 text-white shadow-2xl">
+                            <h4 className="text-xl font-bold mb-4 flex items-center gap-2 text-accent-gold">
+                                <Icon name="DollarSign" size={24} />
+                                مدل درآمد پایه همگانی (UBI)
+                            </h4>
+                            <p className="text-sm text-brand-100 mb-6">این مبلغ از محل توزیع عادلانه یارانه‌های انرژی (توکن انرژی) تامین می‌شود و کاملاً «غیرتورمی» است.</p>
+                            
+                            <div className="flex flex-col gap-6">
                                 <div>
                                     <label className="block text-sm text-brand-200 mb-2">تعداد اعضای خانوار</label>
                                     <div className="flex items-center gap-4 bg-white/10 p-2 rounded-xl w-fit">
-                                        <button onClick={() => setFamilySize(Math.max(1, familySize - 1))} className="w-8 h-8 flex items-center justify-center bg-white/20 rounded-lg hover:bg-white/30">-</button>
-                                        <span className="text-xl font-bold w-8 text-center">{familySize}</span>
-                                        <button onClick={() => setFamilySize(familySize + 1)} className="w-8 h-8 flex items-center justify-center bg-white/20 rounded-lg hover:bg-white/30">+</button>
+                                        <button onClick={() => setFamilySize(Math.max(1, familySize - 1))} className="w-10 h-10 flex items-center justify-center bg-white/20 rounded-lg hover:bg-white/30 transition-colors text-xl font-bold">-</button>
+                                        <span className="text-3xl font-extrabold w-12 text-center">{new Intl.NumberFormat('fa-IR').format(familySize)}</span>
+                                        <button onClick={() => setFamilySize(familySize + 1)} className="w-10 h-10 flex items-center justify-center bg-white/20 rounded-lg hover:bg-white/30 transition-colors text-xl font-bold">+</button>
                                     </div>
                                 </div>
                                 
-                                <div className="space-y-4">
-                                    <div className="flex justify-between items-center border-b border-white/10 pb-2">
-                                        <span className="text-brand-100">درآمد پایه ماهانه (دلاری):</span>
-                                        <span className="text-2xl font-bold text-accent-gold">${familySize * ubiPerPerson}</span>
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-center border-b border-white/10 pb-3">
+                                        <span className="text-brand-100 font-medium">درآمد پایه ماهانه (دلاری):</span>
+                                        <span className="text-3xl font-extrabold text-accent-gold">${new Intl.NumberFormat('fa-IR').format(familySize * ubiPerPerson)}</span>
                                     </div>
-                                    <div className="flex justify-between items-center border-b border-white/10 pb-2">
-                                        <span className="text-brand-100">درآمد پایه سالانه:</span>
-                                        <span className="text-xl font-bold">${familySize * ubiPerPerson * 12}</span>
+                                    <div className="flex justify-between items-center border-b border-white/10 pb-3">
+                                        <span className="text-brand-100 font-medium">معادل ریالی (تقریبی):</span>
+                                        <span className="text-2xl font-bold text-brand-100">بر اساس نرخ بازار</span>
+                                    </div>
+                                    <div className="flex justify-between items-center pt-2">
+                                        <span className="text-brand-100 font-medium">هدف ریشه‌کنی فقر مطلق:</span>
+                                        <span className="text-2xl font-bold text-green-400">صفر نفر!</span>
                                     </div>
                                 </div>
-                                <p className="text-xs text-brand-300 bg-black/20 p-3 rounded-lg">
-                                    * این مبلغ از محل توزیع عادلانه یارانه انرژی (بنزین، برق، گاز) تامین شده و جایگزین یارانه‌های پنهان فعلی می‌شود که عمدتاً به نفع پرمصرف‌هاست.
-                                </p>
                             </div>
+                            <div className="mt-6 text-xs text-brand-300">
+                                
+                            </div>
+                        </div>
 
-                            <div className="w-full md:w-1/2 bg-white/5 rounded-2xl p-6 backdrop-blur-sm border border-white/10">
-                                <h4 className="text-lg font-bold mb-4 flex items-center gap-2">
-                                    <Icon name="TrendingUp" size={18} />
-                                    اثر بر قدرت خرید
-                                </h4>
-                                <div className="space-y-4">
-                                    {/* Simple visualizer */}
-                                    <div>
-                                        <div className="flex justify-between text-xs mb-1">
-                                            <span>وضعیت فعلی (یارانه نقدی قدیم)</span>
-                                            <span className="text-red-300">پایین</span>
-                                        </div>
-                                        <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                                            <div className="h-full bg-red-400 w-[20%]"></div>
-                                        </div>
+                        {/* Purchasing Power Comparison */}
+                        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xl">
+                            <h4 className="text-xl font-bold mb-4 flex items-center gap-2 text-slate-800">
+                                <Icon name="Gauge" size={24} className="text-red-500" />
+                                نمودار مقایسه تورم و قدرت خرید
+                            </h4>
+                            <p className="text-sm text-slate-500 mb-6">تورم بالای ۱۸٪ قدرت خرید را ذوب می‌کند؛ کاهش پایدار تورم، مهم‌ترین عامل حفظ ارزش ریال است.</p>
+
+                            <div className="space-y-6">
+                                {/* Current Subsidy Status */}
+                                <div className="p-4 border border-red-200 bg-red-50 rounded-lg">
+                                    <div className="flex justify-between items-end mb-2">
+                                        <span className="text-sm font-medium text-red-700">ارزش یارانه نقدی اولیه</span>
+                                        <span className="text-3xl font-extrabold text-red-600">$۲</span>
                                     </div>
-                                    <div>
-                                        <div className="flex justify-between text-xs mb-1">
-                                            <span>طرح بنای ایران (۱۴۰۶)</span>
-                                            <span className="text-green-300">افزایش چشمگیر</span>
-                                        </div>
-                                        <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                                            <div className="h-full bg-green-400 w-[85%]"></div>
-                                        </div>
+                                    <div className="h-3 bg-red-200 rounded-full overflow-hidden">
+                                        <div className="h-full bg-red-500 w-[4%] transition-all duration-1000" style={{ width: '4%' }}></div>
                                     </div>
+                                    <p className="text-xs text-red-500 mt-1">شروع: ۴۵ دلار. پایان: ذوب شدن به دلیل تورم مزمن (مالیات ظالمانه).</p>
                                 </div>
-                                <div className="mt-6 text-sm text-center text-brand-200">
-                                    با حذف تورم و ایجاد رشد اقتصادی، ارزش واقعی این درآمد حفظ خواهد شد.
+
+                                {/* UBI Target Status (Stabilized) */}
+                                <div className="p-4 border border-green-200 bg-green-50 rounded-lg">
+                                    <div className="flex justify-between items-end mb-2">
+                                        <span className="text-sm font-medium text-green-700">ارزش UBI پایدار (توکن انرژی)</span>
+                                        <span className="text-3xl font-extrabold text-green-600">$۳۰</span>
+                                    </div>
+                                    <div className="h-3 bg-green-200 rounded-full overflow-hidden">
+                                        <div className="h-full bg-green-500 w-[95%] transition-all duration-1000" style={{ width: '95%' }}></div>
+                                    </div>
+                                    <p className="text-xs text-green-500 mt-1">حفظ ارزش: تضمین ارزش دلاری به دلیل تأمین از منابع ارزی انرژی و مهار تورم.</p>
                                 </div>
                             </div>
                         </div>
@@ -524,35 +532,220 @@
             )
         }
 
-        // Main App Layout
-        const App = () => {
-            const [activeTab, setActiveTab] = useState('dashboard');
-            const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+        // Section 4: Reform Timeline (Gantt/Timeline)
+        const ReformTimeline = () => {
+            const timelineData = [
+                {
+                    year: '۱۴۰۳', title: 'تثبیت و تأمین مالی غیرتورمی', immediateImpact: 'جلوگیری از تشدید تورم کوتاه‌مدت', steps: [
+                        { label: "تامین مالی کسری با فروش زمین/اوراق", phase: "blue", duration: 12 },
+                        { label: "شروع اصلاحات ریشه‌ای مالیاتی و بانکی", phase: "brand", duration: 18 },
+                    ]
+                },
+                {
+                    year: '۱۴۰۴', title: 'آزادسازی و رونق اشتغال', immediateImpact: 'افزایش سریع اشتغال از طریق آزادی کسب‌وکارها', steps: [
+                        { label: "حذف انحصارات و امضاهای طلایی", phase: "amber", duration: 6 },
+                        { label: "حذف کلیه قیمت‌گذاری‌های دولتی", phase: "amber", duration: 6 },
+                        { label: "استقرار گواهی محوری به جای مجوزمحوری", phase: "amber", duration: 12 },
+                    ]
+                },
+                {
+                    year: '۱۴۰۵', title: 'فقرزدایی پایدار و کنترل تورم', immediateImpact: 'ریشه‌کنی دائمی فقر مطلق و تضمین حداقل معیشت', steps: [
+                        { label: "راه‌اندازی بازار متشکل انرژی", phase: "green", duration: 6 },
+                        { label: "اعطای UBI (توکن ۳۰ دلاری) به هر ایرانی", phase: "green", duration: 12 },
+                        { label: "کاهش پایدار تورم به زیر ۱۵٪", phase: "blue", duration: 12 },
+                    ]
+                },
+                {
+                    year: '۱۴۰۶', title: 'پایداری و جایگاه بین‌المللی', immediateImpact: 'حفظ ارزش ریال و دسترسی به تسهیلات', steps: [
+                        { label: "تثبیت تورم در محدوده ۸-۶٪", phase: "blue", duration: 12 },
+                        { label: "دیپلماسی راه و رشد ۱۰۰٪ صادرات", phase: "sky", duration: 12 },
+                        { label: "استفاده از UBI برای تضمین وام‌های کوچک", phase: "green", duration: 12 },
+                    ]
+                }
+            ];
 
             return (
-                <div className="flex min-h-screen bg-slate-50 flex-col md:flex-row">
-                    {/* Mobile Header */}
-                    <div className="md:hidden bg-slate-900 text-white p-4 flex justify-between items-center sticky top-0 z-50">
-                        <div className="font-bold">بنای ایران</div>
-                        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-                            <Icon name={isMobileMenuOpen ? "X" : "Menu"} />
-                        </button>
-                    </div>
+                <div className="space-y-8 pt-8 animate-fade-in">
+                    <h3 className="text-xl font-bold text-slate-800 border-r-4 border-slate-600 pr-3">۵. نقشه راه و گام‌های اجرایی (Timeline)</h3>
+                    <p className="text-slate-500">زمان‌بندی اقدامات کلیدی و اثرات مستقیم آن‌ها بر معیشت خانوار (بر حسب ماه‌ها).</p>
 
-                    {/* Sidebar (Desktop & Mobile) */}
-                    <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:block fixed inset-0 z-40 md:static bg-slate-900 md:bg-transparent`}>
-                        <Sidebar activeTab={activeTab} setActiveTab={(tab) => { setActiveTab(tab); setIsMobileMenuOpen(false); }} />
-                    </div>
+                    <div className="relative border-r-4 border-slate-200 mr-6 space-y-12 py-4">
+                        {timelineData.map((phase, idx) => (
+                            <div key={idx} className="relative pr-8">
+                                {/* Marker */}
+                                <div className={`timeline-marker ${idx % 2 === 0 ? 'bg-brand-500' : 'bg-slate-700'}`}></div>
+                                
+                                {/* Card */}
+                                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-md">
+                                    <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 border-b border-slate-100 pb-4">
+                                        <div className="flex items-center gap-4">
+                                            <span className="text-2xl font-extrabold text-brand-600">{phase.year}</span>
+                                            <h4 className="text-xl font-bold text-slate-800">{phase.title}</h4>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="mb-4 bg-green-50 text-green-800 p-3 rounded-lg text-sm font-medium flex items-center gap-2">
+                                        <Icon name="Zap" size={16} />
+                                        <span>اثر فوری بر خانوار: {phase.immediateImpact}</span>
+                                    </div>
 
-                    {/* Main Content */}
-                    <main className="flex-1 p-4 md:p-8 overflow-y-auto h-screen">
-                        <div className="max-w-6xl mx-auto">
-                            {activeTab === 'dashboard' && <Dashboard />}
-                            {activeTab === 'roadmap' && <Roadmap />}
-                            {activeTab === 'pillars' && <Pillars />}
-                            {activeTab === 'simulation' && <Simulation />}
+                                    <div className="space-y-3">
+                                        {phase.steps.map((step, sIdx) => (
+                                            <div key={sIdx} className="text-sm flex items-center gap-2">
+                                                <div className={`w-2 h-2 rounded-full bg-${step.phase}-500 shrink-0`}></div>
+                                                <span className="text-slate-700 font-medium">{step.label}</span>
+                                                <span className="text-xs text-slate-400 mr-auto">({step.duration} ماه)</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+        
+        // Section 5: Structural Levers
+        const StructuralLevers = () => {
+            const levers = [
+                { title: "اصلاح نظام بانکی", icon: "Hourglass", desc: "مهار موتور خلق پول بی‌ضابطه برای کنترل پایدار تورم (۱۴۰۳-۱۴۰۸)." },
+                { title: "ضد فساد و کسب‌وکار", icon: "Columns", desc: "حذف قیمت‌گذاری دستوری، امضاهای طلایی و مجوزمحوری." },
+                { title: "ژئواکونومی و تجارت", icon: "Ship", desc: "دیپلماسی راه، اتصال به کریدور ابریشم و رشد ۱۰۰٪ صادرات غیرنفتی." },
+            ];
+
+            return (
+                <div className="space-y-8 pt-8 pb-12 animate-fade-in">
+                    <h3 className="text-xl font-bold text-slate-800 border-r-4 border-brand-500 pr-3">۶. محرک‌های ساختاری برای پایداری</h3>
+                    <p className="text-slate-500">اصلاحات عمیقی که نتایج پایدار برنامه (مانند تورم پایین) را تضمین می‌کنند.</p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {levers.map((lever, idx) => (
+                            <div key={idx} className="p-6 bg-brand-50 rounded-2xl border border-brand-100 shadow-md">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <Icon name={lever.icon} size={24} className="text-brand-700" />
+                                    <h4 className="text-lg font-bold text-brand-800">{lever.title}</h4>
+                                </div>
+                                <p className="text-sm text-slate-600 leading-relaxed">{lever.desc}</p>
+                            </div>
+                        ))}
+                    </div>
+                    
+                    <div className="bg-slate-100 p-6 rounded-xl border border-slate-200 text-slate-700 mt-10">
+                        <p className="font-bold text-lg mb-2">تشبیه نهایی: کابین خلبان تحول</p>
+                        <p className="text-sm leading-relaxed text-justify">
+                            این داشبورد مانند نمایشگری در کابین خلبان یک هواپیما است که از یک طوفان شدید (اقتصاد کنونی: تورم، رکود، فقر) خارج می‌شود. دکمه‌های اصلی (اصلاح نظام بانکی و مالیاتی) باید فشرده شوند تا هواپیما ثبات پیدا کند و مسیرش به سمت آب و هوای آفتابی (اقتصاد هدف: رشد ۶٪ و تورم ۸٪) تنظیم گردد. ابزار اصلی نجات (UBI) نیز مستقیماً به هر مسافر (خانوار) کمک می‌کند تا نه‌تنها از گرسنگی نجات یابد، بلکه سهمیه‌ای پایدار برای مدیریت زندگی خود داشته باشد، در حالی که کاهش تورم (کاهش مالیات بر مصرف) تضمین می‌کند که سرعت پیشروی هواپیما، دارایی‌های مسافران را دود نکند.
+                        </p>
+                    </div>
+                </div>
+            );
+        };
+        
+        // Main App Layout
+        const App = () => {
+            const sections = [
+                { id: 'crisis', label: '۱. بحران و تعهدات', icon: 'LayoutDashboard', Component: CrisisSnapshot },
+                { id: 'transition', label: '۲. مدل تحول', icon: 'TrendingUp', Component: TransitionModel },
+                { id: 'household', label: '۳. اثر بر خانواده', icon: 'Wallet', Component: HouseholdImpact },
+                { id: 'timeline', label: '۴. نقشه راه و گام‌ها', icon: 'Hourglass', Component: ReformTimeline },
+                { id: 'levers', label: '۵. محرک‌های ساختاری', icon: 'Columns', Component: StructuralLevers },
+            ];
+
+            const [activeTab, setActiveTab] = useState(sections[0].id);
+            const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+            
+            // Simplified navigation for a single-page dashboard
+            const scrollToSection = (id) => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth' });
+                    setActiveTab(id);
+                }
+            };
+            
+            // Component to render the current section
+            const CurrentComponent = sections.find(s => s.id === activeTab)?.Component;
+
+            return (
+                <div className="flex min-h-screen bg-slate-50 flex-col">
+                    {/* Header (Fixed Navigation) */}
+                    <header className="sticky top-0 z-30 bg-white shadow-md border-b border-slate-100">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                            <div className="flex justify-between items-center h-16">
+                                {/* Logo/Title */}
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center">
+                                        <Icon name="Building2" color="white" size={18} />
+                                    </div>
+                                    <h1 className="font-extrabold text-xl text-slate-800 hidden md:block">داشبورد بنای ایران</h1>
+                                </div>
+                                
+                                {/* Desktop Menu */}
+                                <nav className="hidden md:flex space-x-4 space-x-reverse">
+                                    {sections.map(item => (
+                                        <button
+                                            key={item.id}
+                                            onClick={() => scrollToSection(item.id)}
+                                            className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all ${
+                                                activeTab === item.id 
+                                                ? 'bg-brand-50 text-brand-700 font-bold border-b-2 border-brand-600' 
+                                                : 'text-slate-600 hover:bg-slate-50 hover:text-brand-600'
+                                            }`}
+                                        >
+                                            <Icon name={item.icon} size={16} />
+                                            <span>{item.label}</span>
+                                        </button>
+                                    ))}
+                                </nav>
+
+                                {/* Mobile Menu Button */}
+                                <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="md:hidden p-2 text-slate-600 hover:text-brand-600">
+                                    <Icon name={isMobileMenuOpen ? "X" : "Menu"} size={24} />
+                                </button>
+                            </div>
+                        </div>
+                        
+                        {/* Mobile Menu Dropdown */}
+                        {isMobileMenuOpen && (
+                            <div className="md:hidden bg-white shadow-xl py-2 border-t border-slate-100 absolute w-full">
+                                {sections.map(item => (
+                                    <button
+                                        key={item.id}
+                                        onClick={() => { scrollToSection(item.id); setIsMobileMenuOpen(false); }}
+                                        className={`w-full text-right px-4 py-3 text-base flex items-center gap-3 transition-all ${
+                                            activeTab === item.id 
+                                            ? 'bg-brand-50 text-brand-700 font-bold border-r-4 border-brand-600' 
+                                            : 'text-slate-700 hover:bg-slate-50'
+                                        }`}
+                                    >
+                                        <Icon name={item.icon} size={18} />
+                                        <span>{item.label}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </header>
+                    
+                    {/* Main Content Sections */}
+                    <main className="flex-1 p-4 md:p-10">
+                        <div className="max-w-7xl mx-auto">
+                            {sections.map(section => (
+                                <section 
+                                    key={section.id} 
+                                    id={section.id} 
+                                    className="pt-16 pb-12 border-b border-slate-200"
+                                >
+                                    <section.Component />
+                                </section>
+                            ))}
                         </div>
                     </main>
+                    
+                    {/* Footer - Optional */}
+                    <footer className="bg-slate-900 text-white p-6 text-center text-xs">
+                        <p>«یستدل علی ادبار الدول باربع: تضییع الاصول، والتمسک بالفروع، و تقدیم الاراذل، و تأخیر الافاضل» - امام علی (ع)</p>
+                        <p className="mt-2 text-slate-400">طراحی و مدل‌سازی: طرح اقتصادی بنای ایران (۱۴۰۳)</p>
+                    </footer>
                 </div>
             );
         };
