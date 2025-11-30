@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>داشبورد طرح اقتصادی بنای ایران (۱۴۰۳-۱۴۰۶)</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100;300;400;500;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Vazirmatn', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        },
+                        accent: {
+                            gold: '#fbbf24',
+                            danger: '#ef4444',
+                            success: '#22c55e'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background-color: #f8fafc;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- Icons Data (Self-contained to avoid library errors) ---
+        // Wrap adjacent JSX elements in Fragments <>...</>
+        const iconsData = {
+            LayoutDashboard: <><rect width="7" height="9" x="3" y="3" rx="1" /><rect width="7" height="5" x="14" y="3" rx="1" /><rect width="7" height="9" x="14" y="12" rx="1" /><rect width="7" height="5" x="3" y="16" rx="1" /></>,
+            Map: <><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" /><line x1="9" x2="9" y1="3" y2="18" /><line x1="15" x2="15" y1="6" y2="21" /></>,
+            Columns: <><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><line x1="12" x2="12" y1="3" y2="21" /></>,
+            TrendingUp: <><polyline points="22 7 13.5 15.5 8.5 10.5 2 17" /><polyline points="16 7 22 7 22 13" /></>,
+            Building2: <><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z" /><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" /><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2" /><path d="M10 6h4" /><path d="M10 10h4" /><path d="M10 14h4" /><path d="M10 18h4" /></>,
+            Users: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></>,
+            Percent: <><line x1="19" x2="5" y1="5" y2="19" /><circle cx="6.5" cy="6.5" r="2.5" /><circle cx="17.5" cy="17.5" r="2.5" /></>,
+            Wallet: <><path d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5Zm-6 0h6" /></>,
+            Ship: <><path d="M2 21c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1" /><path d="M19.38 20A11.6 11.6 0 0 0 21 14l-9-4-9 4c0 2.9.9 5.8 2.38 6" /><path d="M12 10V4" /><path d="M8 8v1" /><path d="M16 8v1" /></>,
+            AlertTriangle: <><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><line x1="12" x2="12" y1="9" y2="13" /><line x1="12" x2="12.01" y1="17" y2="17" /></>,
+            ArrowLeft: <><line x1="19" x2="5" y1="12" y2="12" /><polyline points="12 19 5 12 12 5" /></>,
+            CheckCircle2: <><circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" /></>,
+            HardHat: <><path d="M2 18a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v2z" /><path d="M10 10V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5" /><path d="M4 15v-3a6 6 0 0 1 6-6h0" /><path d="M14 6h0a6 6 0 0 1 6 6v3" /></>,
+            TrendingDown: <><polyline points="22 17 13.5 8.5 8.5 13.5 2 7" /><polyline points="16 17 22 17 22 11" /></>,
+            HeartHandshake: <><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /><path d="M12 5 9.04 7.96a2.17 2.17 0 0 0 0 3.08v0c.82.82 2.13.85 3 .07l2.07-1.9a2.82 2.82 0 0 1 3.79 0l2.96 2.66" /><path d="M18 15v2.25" /><path d="M21 15V12" /></>,
+            ShieldAlert: <><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" /><line x1="12" x2="12" y1="8" y2="12" /><line x1="12" x2="12.01" y1="16" y2="16" /></>,
+            Globe: <><circle cx="12" cy="12" r="10" /><line x1="2" x2="22" y1="12" y2="12" /><path d="a15.3 15.3 0 0 1 4-10 15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10" /></>,
+            Menu: <><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="18" y2="18" /></>,
+            X: <><path d="M18 6 6 18" /><path d="m6 6 12 12" /></>
+        };
+
+        // Icon Component
+        const Icon = ({ name, size = 20, color = "currentColor", className = "" }) => {
+            const iconContent = iconsData[name];
+            
+            if (!iconContent) return null;
+            
+            return (
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width={size}
+                    height={size}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke={color}
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className={className}
+                >
+                    {iconContent}
+                </svg>
+            );
+        };
+
+        // Custom Line Chart Component (SVG based for lightness)
+        const TrendChart = ({ data, color, title, unit }) => {
+            const maxVal = Math.max(...data.map(d => d.value));
+            const minVal = Math.min(...data.map(d => d.value));
+            const height = 150;
+            const width = 100; // Percentage
+            
+            // Normalize points
+            const points = data.map((d, i) => {
+                const x = (i / (data.length - 1)) * 100;
+                // Inverse Y because SVG starts from top
+                const y = 100 - ((d.value - 0) / (maxVal * 1.2)) * 100; 
+                return `${x},${y}`;
+            }).join(' ');
+
+            return (
+                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div className="flex justify-between items-center mb-4">
+                        <h4 className="text-sm font-bold text-slate-700">{title}</h4>
+                        <span className={`text-xs font-bold px-2 py-1 rounded bg-${color}-100 text-${color}-700`}>
+                            هدف: {data[data.length-1].value} {unit}
+                        </span>
+                    </div>
+                    <div className="relative h-40 w-full">
+                        <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="h-full w-full overflow-visible">
+                            {/* Grid Lines */}
+                            <line x1="0" y1="25" x2="100" y2="25" stroke="#e2e8f0" strokeWidth="0.5" strokeDasharray="2" />
+                            <line x1="0" y1="50" x2="100" y2="50" stroke="#e2e8f0" strokeWidth="0.5" strokeDasharray="2" />
+                            <line x1="0" y1="75" x2="100" y2="75" stroke="#e2e8f0" strokeWidth="0.5" strokeDasharray="2" />
+                            
+                            {/* The Line */}
+                            <polyline
+                                fill="none"
+                                stroke={color === 'red' ? '#ef4444' : color === 'green' ? '#22c55e' : '#3b82f6'}
+                                strokeWidth="2"
+                                points={points}
+                                vectorEffect="non-scaling-stroke"
+                            />
+                            
+                            {/* Area under curve (optional opacity) */}
+                            <polygon
+                                fill={color === 'red' ? '#ef4444' : color === 'green' ? '#22c55e' : '#3b82f6'}
+                                fillOpacity="0.1"
+                                points={`0,100 ${points} 100,100`}
+                            />
+
+                            {/* Data Points */}
+                            {data.map((d, i) => {
+                                const x = (i / (data.length - 1)) * 100;
+                                const y = 100 - ((d.value - 0) / (maxVal * 1.2)) * 100;
+                                return (
+                                    <g key={i}>
+                                        <circle cx={x} cy={y} r="1.5" fill="white" stroke="currentColor" className="text-slate-500" strokeWidth="0.5" />
+                                        <text x={x} y={y - 5} fontSize="4" textAnchor="middle" fill="#64748b">{d.value}</text>
+                                        <text x={x} y="115" fontSize="4" textAnchor="middle" fill="#94a3b8">{d.year}</text>
+                                    </g>
+                                )
+                            })}
+                        </svg>
+                    </div>
+                </div>
+            );
+        };
+
+        // Navigation
+        const Sidebar = ({ activeTab, setActiveTab }) => {
+            const menuItems = [
+                { id: 'dashboard', label: 'داشبورد مدیریتی', icon: 'LayoutDashboard' },
+                { id: 'roadmap', label: 'نقشه راه اجرایی', icon: 'Map' },
+                { id: 'pillars', label: 'ستون‌های سیاستی', icon: 'Columns' },
+                { id: 'simulation', label: 'شبیه‌ساز خانوار', icon: 'TrendingUp' },
+            ];
+
+            return (
+                <aside className="w-full md:w-64 bg-slate-900 text-white flex-shrink-0 md:h-screen sticky top-0 z-50">
+                    <div className="p-6 border-b border-slate-700">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-brand-500 rounded-lg flex items-center justify-center">
+                                <Icon name="Building2" color="white" />
+                            </div>
+                            <div>
+                                <h1 className="font-bold text-lg">بنای ایران</h1>
+                                <p className="text-xs text-slate-400">۱۴۰۳ - ۱۴۰۶</p>
+                            </div>
+                        </div>
+                    </div>
+                    <nav className="p-4 space-y-2">
+                        {menuItems.map(item => (
+                            <button
+                                key={item.id}
+                                onClick={() => setActiveTab(item.id)}
+                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                                    activeTab === item.id 
+                                    ? 'bg-brand-600 text-white shadow-lg shadow-brand-900/20' 
+                                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                }`}
+                            >
+                                <Icon name={item.icon} size={18} />
+                                <span className="text-sm font-medium">{item.label}</span>
+                            </button>
+                        ))}
+                    </nav>
+                    
+                    <div className="absolute bottom-0 w-full p-6 bg-slate-950">
+                         <p className="text-xs text-slate-500 leading-relaxed text-justify">
+                            «یستدل علی ادبار الدول باربع: تضییع الاصول، والتمسک بالفروع، و تقدیم الاراذل، و تأخیر الافاضل»
+                            <br/>
+                            <span className="block mt-2 text-slate-600">- امام علی (ع)</span>
+                         </p>
+                    </div>
+                </aside>
+            );
+        };
+
+        // Section: Dashboard
+        const Dashboard = () => {
+            const stats = [
+                { title: "رشد اشتغال", target: "۱.۱ میلیون", sub: "شغل در سال", progress: 60, color: "bg-emerald-500", icon: "Users" },
+                { title: "نرخ تورم هدف", target: "۸٪", sub: "میانگین خاورمیانه", progress: 85, color: "bg-blue-500", icon: "Percent" },
+                { title: "درآمد پایه", target: "۳۰ دلار", sub: "ماهانه برای هر نفر", progress: 100, color: "bg-amber-500", icon: "Wallet" },
+                { title: "صادرات غیرنفتی", target: "+۱۰۰٪", sub: "نسبت به GDP", progress: 40, color: "bg-purple-500", icon: "Ship" },
+            ];
+
+            const inflationData = [
+                { year: '۱۴۰۲', value: 45 },
+                { year: '۱۴۰۳', value: 35 },
+                { year: '۱۴۰۴', value: 20 },
+                { year: '۱۴۰۵', value: 12 },
+                { year: '۱۴۰۶', value: 8 },
+            ];
+            
+            const jobData = [
+                { year: '۱۴۰۲', value: 0.5 },
+                { year: '۱۴۰۳', value: 1.1 },
+                { year: '۱۴۰۴', value: 2.2 },
+                { year: '۱۴۰۵', value: 3.3 },
+                { year: '۱۴۰۶', value: 4.5 }, // Cumulative roughly
+            ];
+
+            return (
+                <div className="space-y-6 animate-fade-in">
+                    <header className="mb-8">
+                        <h2 className="text-2xl font-bold text-slate-800 mb-2">وضعیت کلان اقتصادی</h2>
+                        <p className="text-slate-500">پایش شاخص‌های حیاتی برنامه نجات اقتصاد ایران</p>
+                    </header>
+
+                    {/* KPI Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {stats.map((stat, idx) => (
+                            <div key={idx} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className={`p-3 rounded-xl ${stat.color} bg-opacity-10`}>
+                                        <Icon name={stat.icon} className={stat.color.replace('bg-', 'text-')} />
+                                    </div>
+                                    <span className="bg-slate-100 text-slate-600 text-xs px-2 py-1 rounded-full">۱۴۰۶</span>
+                                </div>
+                                <h3 className="text-slate-500 text-sm font-medium mb-1">{stat.title}</h3>
+                                <div className="text-2xl font-bold text-slate-800 mb-1">{stat.target}</div>
+                                <div className="text-xs text-slate-400 mb-3">{stat.sub}</div>
+                                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                    <div className={`h-full ${stat.color} rounded-full`} style={{ width: `${stat.progress}%` }}></div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Charts Row */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+                        <TrendChart 
+                            title="مسیر مهار تورم (درصد)" 
+                            data={inflationData} 
+                            color="blue" 
+                            unit="٪"
+                        />
+                        <TrendChart 
+                            title="رشد تجمعی اشتغال (میلیون نفر)" 
+                            data={jobData} 
+                            color="green" 
+                            unit="نفر"
+                        />
+                    </div>
+
+                    {/* Crisis Alert Section */}
+                    <div className="bg-red-50 border-r-4 border-red-500 p-6 rounded-lg mt-8 flex flex-col md:flex-row gap-6 items-center">
+                        <div className="flex-1">
+                            <h3 className="text-red-800 font-bold text-lg mb-2 flex items-center gap-2">
+                                <Icon name="AlertTriangle" size={20} />
+                                وضعیت اضطراری: پنجره جمعیتی
+                            </h3>
+                            <p className="text-red-700 text-sm leading-relaxed">
+                                ۱۷ سال از فرصت طلایی پنجره جمعیتی از دست رفته است. تنها ۶ سال تا بسته شدن کامل این پنجره و شروع بحران کهن‌سالی باقیست. عدم اقدام فوری منجر به ابربحران‌های صندوق‌های بازنشستگی خواهد شد.
+                            </p>
+                        </div>
+                        <div className="w-full md:w-1/3 bg-white/50 p-4 rounded-lg text-center">
+                            <span className="block text-3xl font-bold text-red-600 mb-1">۶ سال</span>
+                            <span className="text-xs text-red-800 uppercase font-bold">زمان باقی‌مانده</span>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Section: Roadmap
+        const Roadmap = () => {
+            const phases = [
+                {
+                    year: "۱۴۰۳ (سال اول)",
+                    title: "تثبیت اقتصادی",
+                    theme: "bg-blue-500",
+                    details: [
+                        "تامین کسری بودجه با عرضه زمین‌های شهرهای جدید",
+                        "تفکیک دلارهای نفتی از بودجه جاری",
+                        "آغاز دیپلماسی راه (۱۷۰ پروژه زیرساختی)",
+                        "تجمیع سازمان مالیاتی و تامین اجتماعی"
+                    ]
+                },
+                {
+                    year: "۱۴۰۴ (سال دوم)",
+                    title: "آزادسازی و تولید",
+                    theme: "bg-amber-500",
+                    details: [
+                        "حذف انحصارات و امضاهای طلایی",
+                        "حذف قیمت‌گذاری دستوری",
+                        "انحلال سازمان‌های موازی (تعزیرات)",
+                        "بهبود شاخص سهولت کسب‌وکار"
+                    ]
+                },
+                {
+                    year: "۱۴۰۵-۱۴۰۶ (سال سوم)",
+                    title: "نظام رفاهی نوین",
+                    theme: "bg-emerald-500",
+                    details: [
+                        "راه‌اندازی بازار متشکل انرژی",
+                        "تخصیص سهمیه انرژی به افراد (معادل ۳۰ دلار)",
+                        "استقرار نظام مالیات بر مجموع درآمد (PIT)",
+                        "تثبیت تورم زیر ۱۵ درصد"
+                    ]
+                }
+            ];
+
+            return (
+                <div className="space-y-6 animate-fade-in">
+                    <header>
+                        <h2 className="text-2xl font-bold text-slate-800 mb-2">نقشه راه اجرایی</h2>
+                        <p className="text-slate-500">توالی اقدامات برای گذار از رکود به رونق پایدار</p>
+                    </header>
+
+                    <div className="relative border-r-2 border-slate-200 mr-4 space-y-12 py-4">
+                        {phases.map((phase, idx) => (
+                            <div key={idx} className="relative pr-8 group">
+                                {/* Dot */}
+                                <div className={`absolute -right-[9px] top-6 w-4 h-4 rounded-full border-4 border-white shadow-sm ${phase.theme}`}></div>
+                                
+                                {/* Card */}
+                                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg transition-all cursor-default">
+                                    <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 border-b border-slate-100 pb-4">
+                                        <div>
+                                            <span className={`text-xs font-bold text-white px-3 py-1 rounded-full mb-2 inline-block ${phase.theme}`}>
+                                                {phase.year}
+                                            </span>
+                                            <h3 className="text-xl font-bold text-slate-800">{phase.title}</h3>
+                                        </div>
+                                        <div className="hidden md:block">
+                                           <Icon name="ArrowLeft" className="text-slate-300" /> 
+                                        </div>
+                                    </div>
+                                    
+                                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        {phase.details.map((detail, dIdx) => (
+                                            <li key={dIdx} className="flex items-start gap-2 text-sm text-slate-600">
+                                                <Icon name="CheckCircle2" size={16} className="text-green-500 mt-1 shrink-0" />
+                                                <span>{detail}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        // Section: Pillars
+        const Pillars = () => {
+            const pillars = [
+                { title: "رشد اشتغال‌زا", icon: "HardHat", desc: "ایجاد ۱.۱ میلیون شغل با اصلاح محیط کسب‌وکار و توسعه منطقه‌ای." },
+                { title: "مهار پایدار تورم", icon: "TrendingDown", desc: "کنترل نقدینگی، اصلاح ناترازی بانک‌ها و جداسازی نفت از بودجه." },
+                { title: "فقرزدایی غیرتورمی", icon: "HeartHandshake", desc: "درآمد پایه همگانی (UBI) از محل عادلانه‌سازی یارانه انرژی." },
+                { title: "مقابله با فساد", icon: "ShieldAlert", desc: "حذف امضاهای طلایی، ارز چندنرخی و تعارض منافع." },
+                { title: "ارتقای بین‌المللی", icon: "Globe", desc: "دیپلماسی راه، اتصال به جاده ابریشم و توسعه صادرات غیرنفتی." },
+            ];
+
+            return (
+                <div className="animate-fade-in">
+                    <header className="mb-8">
+                        <h2 className="text-2xl font-bold text-slate-800 mb-2">ستون‌های پنج‌گانه سیاستی</h2>
+                        <p className="text-slate-500">تحلیل عمیق محورهای اصلی تحول</p>
+                    </header>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {pillars.map((item, idx) => (
+                            <div key={idx} className="bg-white p-6 rounded-xl border border-slate-200 hover:border-brand-200 transition-colors">
+                                <div className="w-12 h-12 bg-slate-50 rounded-lg flex items-center justify-center mb-4 text-brand-600">
+                                    <Icon name={item.icon} size={24} />
+                                </div>
+                                <h3 className="text-lg font-bold text-slate-800 mb-2">{item.title}</h3>
+                                <p className="text-slate-600 text-sm leading-relaxed">{item.desc}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        // Section: Household Simulation
+        const Simulation = () => {
+            const [familySize, setFamilySize] = useState(4);
+            // 30 USD * 60,000 Tomans (Estimated future rate for calculation base) roughly 1.8m toman per person? 
+            // Let's use generic units or dollar equivalent as per text. Text says 30 USD.
+            const ubiPerPerson = 30; 
+            
+            return (
+                <div className="animate-fade-in space-y-8">
+                     <header>
+                        <h2 className="text-2xl font-bold text-slate-800 mb-2">شبیه‌ساز وضعیت خانوار</h2>
+                        <p className="text-slate-500">تاثیر طرح درآمد پایه همگانی (انرژی) بر درآمد خانواده شما</p>
+                    </header>
+
+                    <div className="bg-gradient-to-br from-brand-900 to-slate-900 rounded-3xl p-8 text-white shadow-2xl">
+                        <div className="flex flex-col md:flex-row gap-8 items-center">
+                            <div className="flex-1 space-y-6 w-full">
+                                <div>
+                                    <label className="block text-sm text-brand-200 mb-2">تعداد اعضای خانوار</label>
+                                    <div className="flex items-center gap-4 bg-white/10 p-2 rounded-xl w-fit">
+                                        <button onClick={() => setFamilySize(Math.max(1, familySize - 1))} className="w-8 h-8 flex items-center justify-center bg-white/20 rounded-lg hover:bg-white/30">-</button>
+                                        <span className="text-xl font-bold w-8 text-center">{familySize}</span>
+                                        <button onClick={() => setFamilySize(familySize + 1)} className="w-8 h-8 flex items-center justify-center bg-white/20 rounded-lg hover:bg-white/30">+</button>
+                                    </div>
+                                </div>
+                                
+                                <div className="space-y-4">
+                                    <div className="flex justify-between items-center border-b border-white/10 pb-2">
+                                        <span className="text-brand-100">درآمد پایه ماهانه (دلاری):</span>
+                                        <span className="text-2xl font-bold text-accent-gold">${familySize * ubiPerPerson}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center border-b border-white/10 pb-2">
+                                        <span className="text-brand-100">درآمد پایه سالانه:</span>
+                                        <span className="text-xl font-bold">${familySize * ubiPerPerson * 12}</span>
+                                    </div>
+                                </div>
+                                <p className="text-xs text-brand-300 bg-black/20 p-3 rounded-lg">
+                                    * این مبلغ از محل توزیع عادلانه یارانه انرژی (بنزین، برق، گاز) تامین شده و جایگزین یارانه‌های پنهان فعلی می‌شود که عمدتاً به نفع پرمصرف‌هاست.
+                                </p>
+                            </div>
+
+                            <div className="w-full md:w-1/2 bg-white/5 rounded-2xl p-6 backdrop-blur-sm border border-white/10">
+                                <h4 className="text-lg font-bold mb-4 flex items-center gap-2">
+                                    <Icon name="TrendingUp" size={18} />
+                                    اثر بر قدرت خرید
+                                </h4>
+                                <div className="space-y-4">
+                                    {/* Simple visualizer */}
+                                    <div>
+                                        <div className="flex justify-between text-xs mb-1">
+                                            <span>وضعیت فعلی (یارانه نقدی قدیم)</span>
+                                            <span className="text-red-300">پایین</span>
+                                        </div>
+                                        <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                                            <div className="h-full bg-red-400 w-[20%]"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div className="flex justify-between text-xs mb-1">
+                                            <span>طرح بنای ایران (۱۴۰۶)</span>
+                                            <span className="text-green-300">افزایش چشمگیر</span>
+                                        </div>
+                                        <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                                            <div className="h-full bg-green-400 w-[85%]"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="mt-6 text-sm text-center text-brand-200">
+                                    با حذف تورم و ایجاد رشد اقتصادی، ارزش واقعی این درآمد حفظ خواهد شد.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )
+        }
+
+        // Main App Layout
+        const App = () => {
+            const [activeTab, setActiveTab] = useState('dashboard');
+            const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+            return (
+                <div className="flex min-h-screen bg-slate-50 flex-col md:flex-row">
+                    {/* Mobile Header */}
+                    <div className="md:hidden bg-slate-900 text-white p-4 flex justify-between items-center sticky top-0 z-50">
+                        <div className="font-bold">بنای ایران</div>
+                        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+                            <Icon name={isMobileMenuOpen ? "X" : "Menu"} />
+                        </button>
+                    </div>
+
+                    {/* Sidebar (Desktop & Mobile) */}
+                    <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:block fixed inset-0 z-40 md:static bg-slate-900 md:bg-transparent`}>
+                        <Sidebar activeTab={activeTab} setActiveTab={(tab) => { setActiveTab(tab); setIsMobileMenuOpen(false); }} />
+                    </div>
+
+                    {/* Main Content */}
+                    <main className="flex-1 p-4 md:p-8 overflow-y-auto h-screen">
+                        <div className="max-w-6xl mx-auto">
+                            {activeTab === 'dashboard' && <Dashboard />}
+                            {activeTab === 'roadmap' && <Roadmap />}
+                            {activeTab === 'pillars' && <Pillars />}
+                            {activeTab === 'simulation' && <Simulation />}
+                        </div>
+                    </main>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
