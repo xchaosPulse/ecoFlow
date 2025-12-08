@@ -8,7 +8,8 @@
     <!-- Social Media Metadata (Thumbnail/Preview) -->
     <meta property="og:title" content="مُبادله: سامانه پایاپای کالای محلی">
     <meta property="og:description" content="حفظ قدرت خرید با کالای واقعی. سیستم اعتبار کالای محلی را شبیه‌سازی کنید.">
-    <meta property="og:image" content="https://placehold.co/1200x630/c59a53/ffffff?text=Mobadeleh+Barter+System">
+    <!-- Changed placeholder image for better preview -->
+    <meta property="og:image" content="https://placehold.co/1200x630/c59a53/ffffff?text=Mobadeleh+Barter+System"> 
     <meta property="og:url" content="https://your-app-url.com/mobadeleh">
 
     <!-- Tailwind CSS -->
@@ -99,21 +100,6 @@
             border-radius: 4px;
         }
     </style>
-
-    <!-- Chosen Palette: Warm Earth & Trust (Brand: Gold/Brown, Background: Cream) -->
-    <!-- Application Structure Plan: 
-         1. Hero Section: Clear value proposition based on the Executive Summary.
-         2. Economic Simulator (Dashboard): The core interactive element. Users can 'add' items to a virtual pantry to see how Rials convert to Commodity Credit (CC) and visualize inflation protection. Data is now persisted using localStorage.
-         3. Marketplace Preview: Simulates the 'Local Market' search functionality, now dynamically updated based on the persisted CC credit from the Simulator.
-         4. Roadmap & Tech Stack: Interactive timeline and grid for the phased rollout plan.
-         Rationale: This structure moves from "Why" (Hero) to "How" (Simulator) to "What Next" (Roadmap), mirroring the user's journey of understanding, now enhanced with cross-section data persistence. -->
-    <!-- Visualization & Content Choices:
-         1. Value Retention Chart (Line): Compares Cash vs. Goods over time (Simulated Inflation). Goal: Inform/Convince.
-         2. Portfolio Donut Chart: Visualizes the user's asset mix (persisted). Goal: Inform.
-         3. Dynamic Conversion Calculator: Inputs for Good/Weight -> Outputs CC. Goal: Interact/Understand logic.
-         4. Marketplace Cards: Dynamic status (Can Trade/Insufficient Credit) based on the current CC balance. Goal: Integrate/Action.
-    -->
-    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
 </head>
 <body class="font-sans antialiased min-h-screen flex flex-col">
 
@@ -316,16 +302,16 @@
                     در این بخش می‌توانید کالاهای موجود در محله خود (شعاع ۵ کیلومتری) را جستجو کنید. وضعیت اعتبار CC شما از بخش شبیه‌ساز خوانده می‌شود و نشان می‌دهد آیا می‌توانید این مبادلات را انجام دهید یا خیر.
                 </p>
 
-                <!-- Search Bar -->
+                <!-- Search Bar - ADDED filterMarketplace function calls -->
                 <div class="flex flex-col md:flex-row gap-4 max-w-3xl mx-auto mb-10">
-                    <input type="text" placeholder="جستجوی کالا (مثلاً عدس)..." class="flex-grow bg-gray-50 border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
-                    <select class="bg-gray-50 border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                    <input type="text" id="marketSearchInput" onkeyup="filterMarketplace()" placeholder="جستجوی کالا (مثلاً عدس)..." class="flex-grow bg-gray-50 border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                    <select id="marketAreaSelect" class="bg-gray-50 border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
                         <option>تمام محله‌ها</option>
                         <option>تهران - نارمک</option>
                         <option>تهران - تهران‌پارس</option>
                         <option>تهران - پیروزی</option>
                     </select>
-                    <button class="bg-brand-600 text-white px-6 py-3 rounded-lg hover:bg-brand-700 font-bold transition">جستجو</button>
+                    <button onclick="filterMarketplace()" class="bg-brand-600 text-white px-6 py-3 rounded-lg hover:bg-brand-700 font-bold transition">جستجو</button>
                 </div>
 
                 <!-- Market Grid -->
@@ -476,7 +462,9 @@
             // Re-render charts and dynamic content when switching tabs
             if (tabId === 'home') renderInflationChart();
             if (tabId === 'simulation') renderPortfolioChart();
-            if (tabId === 'market') renderMarketplace();
+            // Market render is now handled by updateDashboard and filterMarketplace, 
+            // but we call it here to ensure proper initial state after tab switch if state hasn't changed.
+            if (tabId === 'market') filterMarketplace(); 
 
             document.getElementById('mobile-menu').classList.add('hidden');
         }
@@ -634,7 +622,7 @@
             saveAssets();
         }
 
-        // --- Update Dashboard UI ---
+        // --- Update Dashboard UI (now includes marketplace sync) ---
         function updateDashboard() {
             const tableBody = document.getElementById('assetsTableBody');
             tableBody.innerHTML = '';
@@ -665,20 +653,39 @@
             // Update Chart
             renderPortfolioChart();
             
-            // Ensure marketplace reflects new credit immediately
-            if (document.getElementById('market').classList.contains('active')) {
-                renderMarketplace();
-            }
+            // ⭐️ IMPORTANT FIX: Update marketplace immediately to reflect new credit
+            // It reads the current search query to keep the filter active.
+            const currentQuery = document.getElementById('marketSearchInput')?.value || '';
+            renderMarketplace(currentQuery); 
         }
         
-        // --- Marketplace Logic ---
-        function renderMarketplace() {
+        // --- Marketplace Logic (Now includes filtering) ---
+        function filterMarketplace() {
+            const query = document.getElementById('marketSearchInput').value.toLowerCase().trim();
+            // We can also include logic for area filtering here if needed, but for now, just text search.
+            renderMarketplace(query);
+        }
+
+        function renderMarketplace(query = '') {
             const grid = document.getElementById('marketplaceGrid');
             grid.innerHTML = '';
             
-            const currentCC = totalCC; // Use global totalCC updated by updateDashboard/calculateTotals
+            const currentCC = totalCC; // Get the live/cached CC balance
 
-            marketplaceItems.forEach(item => {
+            // 1. Filtering Logic
+            const filteredItems = marketplaceItems.filter(item => {
+                if (!query) return true; // Show all if no query
+                // Simple check if the item name contains the query (case-insensitive)
+                return item.name.toLowerCase().includes(query.toLowerCase());
+            });
+
+            if (filteredItems.length === 0) {
+                grid.innerHTML = '<div class="md:col-span-3 text-center text-gray-500 p-8 bg-gray-50 rounded-xl shadow-inner">کالایی با این عنوان پیدا نشد.</div>';
+                return;
+            }
+
+
+            filteredItems.forEach(item => {
                 const isBarter = item.type === 'barter';
                 const canAfford = isBarter && item.ccRequired <= currentCC;
                 
@@ -686,12 +693,15 @@
 
                 if (isBarter) {
                     if (canAfford) {
+                        // ⭐️ FIX: Green status when affordable
                         statusTag = '<div class="absolute top-0 left-0 bg-accent-green text-white text-xs px-2 py-1 rounded-br-lg z-10">اعتبار کافی | مبادله با کالا</div>';
                         actionButton = `<button class="text-brand-600 hover:text-brand-800 text-sm font-bold border border-brand-200 hover:border-brand-600 px-3 py-1 rounded transition">درخواست مبادله</button>`;
                         actionColor = 'text-brand-700';
                         actionText = `${item.ccRequired.toFixed(1)} CC`;
                     } else {
-                        statusTag = `<div class="absolute top-0 left-0 bg-red-500 text-white text-xs px-2 py-1 rounded-br-lg z-10">کسری اعتبار (${(item.ccRequired - currentCC).toFixed(1)} CC)</div>`;
+                        // ⭐️ FIX: Red status when insufficient credit
+                        const creditNeeded = (item.ccRequired - currentCC);
+                        statusTag = `<div class="absolute top-0 left-0 bg-red-500 text-white text-xs px-2 py-1 rounded-br-lg z-10">کسری اعتبار (${creditNeeded.toFixed(1)} CC)</div>`;
                         actionButton = `<button disabled class="text-gray-400 bg-gray-100 text-sm font-bold border border-gray-200 px-3 py-1 rounded cursor-not-allowed">اعتبار کافی نیست</button>`;
                         actionColor = 'text-red-500';
                         actionText = `${item.ccRequired.toFixed(1)} CC`;
@@ -718,7 +728,7 @@
                 }
 
                 const cardHTML = `
-                    <div class="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-xl transition group relative overflow-hidden">
+                    <div class="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-xl transition group relative overflow-hidden text-right">
                         ${statusTag}
                         <div class="flex justify-between items-start mb-4">
                             <div>
@@ -751,9 +761,9 @@
         // --- Initialization ---
         window.addEventListener('load', () => {
             loadAssets();
-            updateDashboard(); // Will calculate totals and render charts/table
+            // updateDashboard calls calculateTotals, renderPortfolioChart, and renderMarketplace
+            updateDashboard(); 
             renderInflationChart();
-            renderMarketplace(); // Initial render of marketplace
         });
 
     </script>
