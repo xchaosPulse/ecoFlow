@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سامانه پایاپای کالای محلی (مُبادله)</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Google Fonts: Vazirmatn for Persian -->
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100;300;400;500;700;900&display=swap" rel="stylesheet">
+
+    <!-- Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fcfbf9',
+                            100: '#f6f1ea',
+                            200: '#ede4d3',
+                            300: '#e0cea9',
+                            400: '#d1b278',
+                            500: '#c59a53',
+                            600: '#aa7e40',
+                            700: '#896136',
+                            800: '#714e32',
+                            900: '#5e412d',
+                        },
+                        accent: {
+                            green: '#4ade80', // Growth/Profit
+                            red: '#f87171',   // Inflation/Loss
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Vazirmatn', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Styles for Chart Containers */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 100%;
+            height: 300px;
+            max-height: 400px;
+        }
+        
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+
+        /* Smooth Transition for Tab Content */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        body {
+            background-color: #f6f1ea; /* brand-100 */
+            color: #5e412d; /* brand-900 */
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #ede4d3; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #aa7e40; 
+            border-radius: 4px;
+        }
+    </style>
+
+    <!-- Chosen Palette: Warm Earth & Trust (Brand: Gold/Brown, Background: Cream) -->
+    <!-- Application Structure Plan: 
+         1. Hero Section: Clear value proposition based on the Executive Summary.
+         2. Economic Simulator (Dashboard): The core interactive element. Users can 'add' items to a virtual pantry to see how Rials convert to Commodity Credit (CC) and visualize inflation protection.
+         3. Marketplace Preview: Simulates the 'Local Market' search functionality with filters (Goods vs Cash).
+         4. Roadmap & Tech Stack: Interactive timeline and grid for the phased rollout plan.
+         5. Educational Layer: Explains the Pricing System and Value Unit logic.
+         Rationale: This structure moves from "Why" (Hero) to "How" (Simulator) to "What Next" (Roadmap), mirroring the user's journey of understanding. -->
+    <!-- Visualization & Content Choices:
+         1. Value Retention Chart (Line): Compares Cash vs. Goods over time (Simulated Inflation). Goal: Inform/Convince.
+         2. Portfolio Donut Chart: Visualizes the user's asset mix. Goal: Inform.
+         3. Dynamic Conversion Calculator: Inputs for Good/Weight -> Outputs CC. Goal: Interact/Understand logic.
+         4. Process Cards: Simple icon-based flow for the exchange mechanism. Goal: Educate.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</head>
+<body class="font-sans antialiased min-h-screen flex flex-col">
+
+    <!-- Navigation -->
+    <nav class="bg-brand-800 text-brand-50 shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-2xl font-black tracking-wider">مُبادله</span>
+                    <span class="mr-2 text-brand-300 text-sm hidden sm:block">| سامانه پایاپای محلی</span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="flex items-baseline space-x-4 space-x-reverse">
+                        <button onclick="switchTab('home')" class="nav-btn px-3 py-2 rounded-md text-sm font-medium hover:bg-brand-700 transition">خانه</button>
+                        <button onclick="switchTab('simulation')" class="nav-btn px-3 py-2 rounded-md text-sm font-medium hover:bg-brand-700 transition">شبیه‌ساز کیف پول</button>
+                        <button onclick="switchTab('market')" class="nav-btn px-3 py-2 rounded-md text-sm font-medium hover:bg-brand-700 transition">بازار محلی</button>
+                        <button onclick="switchTab('roadmap')" class="nav-btn px-3 py-2 rounded-md text-sm font-medium hover:bg-brand-700 transition">نقشه راه</button>
+                    </div>
+                </div>
+                <!-- Mobile menu button stub -->
+                <div class="-mr-2 flex md:hidden">
+                    <button onclick="toggleMobileMenu()" class="inline-flex items-center justify-center p-2 rounded-md text-brand-200 hover:text-white hover:bg-brand-700 focus:outline-none">
+                        ☰
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-brand-700">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <button onclick="switchTab('home')" class="block w-full text-right px-3 py-2 rounded-md text-base font-medium hover:bg-brand-600">خانه</button>
+                <button onclick="switchTab('simulation')" class="block w-full text-right px-3 py-2 rounded-md text-base font-medium hover:bg-brand-600">شبیه‌ساز کیف پول</button>
+                <button onclick="switchTab('market')" class="block w-full text-right px-3 py-2 rounded-md text-base font-medium hover:bg-brand-600">بازار محلی</button>
+                <button onclick="switchTab('roadmap')" class="block w-full text-right px-3 py-2 rounded-md text-base font-medium hover:bg-brand-600">نقشه راه</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow container mx-auto px-4 py-8 max-w-7xl">
+
+        <!-- SECTION 1: HOME / HERO -->
+        <div id="home" class="tab-content active space-y-12">
+            
+            <!-- Hero Banner -->
+            <div class="bg-white rounded-2xl shadow-xl overflow-hidden grid md:grid-cols-2 gap-8 p-8 md:p-12 items-center">
+                <div class="space-y-6">
+                    <h1 class="text-4xl md:text-5xl font-black text-brand-900 leading-tight">
+                        حفظ قدرت خرید با <span class="text-brand-600">کالای واقعی</span>
+                    </h1>
+                    <p class="text-lg text-gray-600 leading-relaxed text-justify">
+                        آیا نگران کاهش ارزش ریال هستید؟ سامانه «مُبادله» راهکاری است که پول نقد شما را به کالاهای اساسی (برنج، حبوبات، روغن) تبدیل می‌کند. به‌جای نگهداری پول بی‌ارزش، "اعتبار کالا" (CC) ذخیره کنید و در شبکه محلی همسایگان خود مبادله نمایید.
+                    </p>
+                    <div class="flex flex-wrap gap-4">
+                        <button onclick="switchTab('simulation')" class="bg-brand-600 text-white px-8 py-3 rounded-lg font-bold shadow-lg hover:bg-brand-700 hover:shadow-xl transition transform hover:-translate-y-1">
+                            شروع شبیه‌سازی
+                        </button>
+                        <button onclick="scrollToId('features')" class="bg-brand-100 text-brand-800 px-8 py-3 rounded-lg font-bold border border-brand-300 hover:bg-brand-200 transition">
+                            چگونه کار می‌کند؟
+                        </button>
+                    </div>
+                </div>
+                <div class="bg-brand-50 p-6 rounded-xl border-2 border-dashed border-brand-200 text-center">
+                    <div class="text-6xl mb-4">⚖️</div>
+                    <h3 class="text-xl font-bold text-brand-800 mb-2">تبدیل ریال به اعتبار پایدار</h3>
+                    <p class="text-sm text-gray-500 mb-6">نمودار فرضی حفظ ارزش در ۶ ماه</p>
+                    
+                    <!-- Chart: Inflation Protection -->
+                    <div class="chart-container mx-auto h-64">
+                        <canvas id="inflationChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Features / Context -->
+            <div id="features" class="grid md:grid-cols-3 gap-8">
+                <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-brand-500 hover:shadow-lg transition">
+                    <div class="text-4xl mb-4 text-center">📦</div>
+                    <h3 class="text-xl font-bold text-brand-900 text-center mb-3">ذخیره کالایی</h3>
+                    <p class="text-gray-600 text-sm text-justify">
+                        به‌جای پول نقد، کالاهای با ماندگاری بالا (مانند برنج و ماکارونی) را در خانه نگه دارید. سیستم ما ارزش لحظه‌ای آنها را محاسبه کرده و به شما اعتبار می‌دهد.
+                    </p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-brand-500 hover:shadow-lg transition">
+                    <div class="text-4xl mb-4 text-center">🤝</div>
+                    <h3 class="text-xl font-bold text-brand-900 text-center mb-3">مبادله محلی</h3>
+                    <p class="text-gray-600 text-sm text-justify">
+                        در شعاع ۵ کیلومتری خود، همسایگانی را بیابید که به کالای شما نیاز دارند یا کالای مورد نیاز شما را دارند. مبادله بدون نیاز به پول نقد.
+                    </p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-brand-500 hover:shadow-lg transition">
+                    <div class="text-4xl mb-4 text-center">🛡️</div>
+                    <h3 class="text-xl font-bold text-brand-900 text-center mb-3">امنیت و اعتماد</h3>
+                    <p class="text-gray-600 text-sm text-justify">
+                        احراز هویت با گوگل و سیستم امتیازدهی دقیق، محیطی امن برای تبادلات ایجاد می‌کند. قیمت‌گذاری شفاف بر اساس نرخ روز بازار آنلاین.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 2: SIMULATION DASHBOARD -->
+        <div id="simulation" class="tab-content space-y-8">
+            <div class="bg-brand-50 border-l-4 border-brand-600 p-6 rounded-r-lg">
+                <h2 class="text-2xl font-bold text-brand-900 mb-2">داشبورد شبیه‌سازی دارایی</h2>
+                <p class="text-brand-800 text-justify">
+                    در این بخش، شما می‌توانید نحوه کارکرد سیستم «اعتبار کالا» (CC) را تجربه کنید. تصور کنید مقداری کالا خریداری کرده‌اید. آنها را به لیست دارایی‌های خود اضافه کنید تا ببینید چگونه ارزش ریالی آنها محاسبه شده و به اعتبار سیستم تبدیل می‌شود. این داشبورد به شما کمک می‌کند تا مفهوم <strong>حفظ ارزش</strong> را در عمل درک کنید.
+                </p>
+            </div>
+
+            <div class="grid lg:grid-cols-3 gap-8">
+                <!-- Add Asset Form -->
+                <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-100 lg:col-span-1">
+                    <h3 class="text-lg font-bold text-brand-800 mb-6 border-b pb-2">ثبت دارایی جدید</h3>
+                    <form id="addAssetForm" class="space-y-4" onsubmit="event.preventDefault(); addAsset();">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">نوع کالا</label>
+                            <select id="assetType" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 focus:ring-brand-500 focus:border-brand-500">
+                                <option value="rice" data-price="1000000">برنج ایرانی (کیلوگرم) - ۱,۰۰۰,۰۰۰ ریال</option>
+                                <option value="lentils" data-price="850000">عدس ریز (کیلوگرم) - ۸۵۰,۰۰۰ ریال</option>
+                                <option value="macaroni" data-price="450000">ماکارونی (بسته ۵۰۰ گرم) - ۴۵۰,۰۰۰ ریال</option>
+                                <option value="oil" data-price="650000">روغن سرخ‌کردنی (لیتر) - ۶۵۰,۰۰۰ ریال</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">مقدار / تعداد</label>
+                            <input type="number" id="assetAmount" min="1" value="1" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 focus:ring-brand-500 focus:border-brand-500">
+                        </div>
+                        
+                        <div class="pt-4">
+                            <button type="submit" class="w-full bg-brand-600 text-white font-bold py-3 rounded-lg hover:bg-brand-700 transition shadow-md flex justify-center items-center gap-2">
+                                <span>➕</span> افزودن به انبار مجازی
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="mt-8 bg-brand-50 p-4 rounded-lg">
+                        <h4 class="text-sm font-bold text-brand-800 mb-2">نرخ تبدیل امروز:</h4>
+                        <p class="text-xs text-brand-600 mb-1">هر ۱۰۰,۰۰۰ ریال ارزش کالا = <strong>۱ واحد اعتبار (1 CC)</strong></p>
+                        <p class="text-xs text-gray-500">به‌روزرسانی شده از: دیجی‌کالا، افق کوروش</p>
+                    </div>
+                </div>
+
+                <!-- Assets Overview & Charts -->
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- Stat Cards -->
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div class="bg-white p-4 rounded-xl shadow border-b-4 border-brand-400">
+                            <p class="text-gray-500 text-xs mb-1">مجموع ارزش ریالی</p>
+                            <p id="totalRial" class="text-2xl font-black text-gray-800">0</p>
+                            <p class="text-xs text-gray-400">ریال</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl shadow border-b-4 border-accent-green">
+                            <p class="text-gray-500 text-xs mb-1">موجودی اعتبار (CC)</p>
+                            <p id="totalCC" class="text-2xl font-black text-brand-600">0</p>
+                            <p class="text-xs text-gray-400">واحد اعتبار</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl shadow border-b-4 border-blue-400 col-span-2 md:col-span-1">
+                            <p class="text-gray-500 text-xs mb-1">تعداد اقلام</p>
+                            <p id="totalItems" class="text-2xl font-black text-gray-800">0</p>
+                            <p class="text-xs text-gray-400">قلم کالا</p>
+                        </div>
+                    </div>
+
+                    <!-- Charts Area -->
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="bg-white p-4 rounded-xl shadow-lg">
+                            <h4 class="text-sm font-bold text-gray-700 mb-4 text-center">ترکیب دارایی‌ها</h4>
+                            <div class="chart-container">
+                                <canvas id="portfolioChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl shadow-lg">
+                            <h4 class="text-sm font-bold text-gray-700 mb-4 text-center">لیست موجودی انبار</h4>
+                            <div class="overflow-y-auto h-[300px] pr-2 custom-scrollbar">
+                                <table class="w-full text-sm text-right">
+                                    <thead class="bg-gray-50 text-gray-600 sticky top-0">
+                                        <tr>
+                                            <th class="p-2">کالا</th>
+                                            <th class="p-2">مقدار</th>
+                                            <th class="p-2">ارزش (CC)</th>
+                                            <th class="p-2">حذف</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="assetsTableBody" class="divide-y divide-gray-100">
+                                        <!-- Rows added by JS -->
+                                        <tr class="text-gray-400 italic text-center">
+                                            <td colspan="4" class="p-4">هنوز کالایی ثبت نشده است.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 3: MARKETPLACE -->
+        <div id="market" class="tab-content space-y-8">
+            <div class="bg-white p-8 rounded-2xl shadow-sm text-center border border-gray-200">
+                <h2 class="text-2xl font-bold text-brand-900 mb-4">بازار محلی (نمونه آزمایشی)</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto mb-8">
+                    در این بخش می‌توانید کالاهای موجود در محله خود (شعاع ۵ کیلومتری) را جستجو کنید. این داده‌ها فرضی هستند تا نحوه تعامل کاربران برای معاوضه یا خرید نقدی را نمایش دهند.
+                </p>
+
+                <!-- Search Bar -->
+                <div class="flex flex-col md:flex-row gap-4 max-w-3xl mx-auto mb-10">
+                    <input type="text" placeholder="جستجوی کالا (مثلاً عدس)..." class="flex-grow bg-gray-50 border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                    <select class="bg-gray-50 border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                        <option>تمام محله‌ها</option>
+                        <option>تهران - نارمک</option>
+                        <option>تهران - تهران‌پارس</option>
+                        <option>تهران - پیروزی</option>
+                    </select>
+                    <button class="bg-brand-600 text-white px-6 py-3 rounded-lg hover:bg-brand-700 font-bold transition">جستجو</button>
+                </div>
+
+                <!-- Market Grid -->
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 text-right">
+                    <!-- Item 1 -->
+                    <div class="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-xl transition group relative overflow-hidden">
+                        <div class="absolute top-0 left-0 bg-accent-green text-white text-xs px-2 py-1 rounded-br-lg z-10">مبادله با کالا</div>
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="font-bold text-lg text-gray-800">۱۰ کیلوگرم برنج طارم</h3>
+                                <p class="text-sm text-gray-500">فاصله: ۵۰۰ متر</p>
+                            </div>
+                            <div class="text-2xl">🍚</div>
+                        </div>
+                        <div class="bg-brand-50 p-3 rounded-lg mb-4">
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-600">ارزش روز:</span>
+                                <span class="font-bold text-brand-700">۱۰,۰۰۰,۰۰۰ ریال</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">اعتبار مورد نیاز:</span>
+                                <span class="font-bold text-brand-700">۱۰۰ CC</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-1">
+                                <span class="text-yellow-400">★</span>
+                                <span class="text-sm font-bold text-gray-700">۴.۸</span>
+                                <span class="text-xs text-gray-400">(۱۲ معامله)</span>
+                            </div>
+                            <button class="text-brand-600 hover:text-brand-800 text-sm font-bold border border-brand-200 hover:border-brand-600 px-3 py-1 rounded transition">درخواست مبادله</button>
+                        </div>
+                    </div>
+
+                    <!-- Item 2 -->
+                    <div class="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-xl transition group relative">
+                        <div class="absolute top-0 left-0 bg-blue-500 text-white text-xs px-2 py-1 rounded-br-lg z-10">فروش نقدی</div>
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="font-bold text-lg text-gray-800">۵ بسته ماکارونی</h3>
+                                <p class="text-sm text-gray-500">فاصله: ۱.۲ کیلومتر</p>
+                            </div>
+                            <div class="text-2xl">🍝</div>
+                        </div>
+                        <div class="bg-brand-50 p-3 rounded-lg mb-4">
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-600">ارزش روز:</span>
+                                <span class="font-bold text-brand-700">۲,۲۵۰,۰۰۰ ریال</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">قیمت پیشنهادی:</span>
+                                <span class="font-bold text-brand-700">۲,۰۰۰,۰۰۰ ریال</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-1">
+                                <span class="text-yellow-400">★</span>
+                                <span class="text-sm font-bold text-gray-700">۵.۰</span>
+                                <span class="text-xs text-gray-400">(۵ معامله)</span>
+                            </div>
+                            <button class="text-brand-600 hover:text-brand-800 text-sm font-bold border border-brand-200 hover:border-brand-600 px-3 py-1 rounded transition">چت با فروشنده</button>
+                        </div>
+                    </div>
+
+                    <!-- Item 3 -->
+                    <div class="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-xl transition group relative">
+                         <div class="absolute top-0 left-0 bg-accent-green text-white text-xs px-2 py-1 rounded-br-lg z-10">مبادله با کالا</div>
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="font-bold text-lg text-gray-800">۳ کیلوگرم عدس</h3>
+                                <p class="text-sm text-gray-500">فاصله: ۲۰۰ متر</p>
+                            </div>
+                            <div class="text-2xl">🥫</div>
+                        </div>
+                        <div class="bg-brand-50 p-3 rounded-lg mb-4">
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-600">ارزش روز:</span>
+                                <span class="font-bold text-brand-700">۲,۵۵۰,۰۰۰ ریال</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">اعتبار مورد نیاز:</span>
+                                <span class="font-bold text-brand-700">۲۵.۵ CC</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-1">
+                                <span class="text-gray-300">★</span>
+                                <span class="text-sm font-bold text-gray-500">-</span>
+                                <span class="text-xs text-gray-400">(کاربر جدید)</span>
+                            </div>
+                            <button class="text-brand-600 hover:text-brand-800 text-sm font-bold border border-brand-200 hover:border-brand-600 px-3 py-1 rounded transition">درخواست مبادله</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 4: ROADMAP -->
+        <div id="roadmap" class="tab-content space-y-8">
+            <div class="bg-white p-8 rounded-2xl shadow-sm">
+                <h2 class="text-2xl font-bold text-brand-900 mb-6 border-b pb-4">نقشه راه توسعه و مقیاس‌پذیری</h2>
+                <div class="relative border-r-4 border-brand-200 mr-4 space-y-12">
+                    
+                    <!-- Phase 0 -->
+                    <div class="relative pr-8">
+                        <div class="absolute -right-3 top-1 w-6 h-6 bg-brand-600 rounded-full border-4 border-white shadow"></div>
+                        <h3 class="text-xl font-bold text-gray-800">فاز ۰: طراحی (۱ ماه)</h3>
+                        <p class="text-sm text-brand-600 font-bold mb-2">وضعیت: در حال انجام</p>
+                        <div class="bg-gray-50 p-4 rounded-lg text-sm text-gray-600 space-y-2">
+                            <p>✅ طراحی MVP و دیتابیس MongoDB</p>
+                            <p>✅ پیاده‌سازی سیستم احراز هویت گوگل</p>
+                            <p>🚧 آماده‌سازی رابط کاربری برای ۱۰۰ کاربر آزمایشی</p>
+                        </div>
+                    </div>
+
+                    <!-- Phase 1 -->
+                    <div class="relative pr-8 opacity-75">
+                        <div class="absolute -right-3 top-1 w-6 h-6 bg-gray-300 rounded-full border-4 border-white"></div>
+                        <h3 class="text-xl font-bold text-gray-800">فاز ۱: پایلوت محلی (۲ ماه)</h3>
+                        <div class="bg-gray-50 p-4 rounded-lg text-sm text-gray-600 space-y-2 mt-2">
+                            <p>🔹 تست در یک محله کوچک (۵۰ کاربر)</p>
+                            <p>🔹 نرخ‌گذاری دستی اقلام مرجع</p>
+                            <p>🔹 هدف: ۱۰۰ تبادل موفق</p>
+                        </div>
+                    </div>
+
+                    <!-- Phase 2 -->
+                    <div class="relative pr-8 opacity-50">
+                        <div class="absolute -right-3 top-1 w-6 h-6 bg-gray-200 rounded-full border-4 border-white"></div>
+                        <h3 class="text-xl font-bold text-gray-800">فاز ۲: توسعه و اتوماسیون (۳ ماه)</h3>
+                        <div class="bg-gray-50 p-4 rounded-lg text-sm text-gray-600 space-y-2 mt-2">
+                            <p>🔹 ربات‌های قیمت‌گذاری خودکار (اسکرپینگ)</p>
+                            <p>🔹 چت داخلی و سیستم امتیازدهی کامل</p>
+                            <p>🔹 گسترش به ۵ منطقه</p>
+                        </div>
+                    </div>
+
+                    <!-- Phase 3 -->
+                    <div class="relative pr-8 opacity-50">
+                        <div class="absolute -right-3 top-1 w-6 h-6 bg-gray-200 rounded-full border-4 border-white"></div>
+                        <h3 class="text-xl font-bold text-gray-800">فاز ۳: رشد و تثبیت (۶ ماه)</h3>
+                        <div class="bg-gray-50 p-4 rounded-lg text-sm text-gray-600 space-y-2 mt-2">
+                            <p>🔹 ۵۰۰۰ کاربر فعال</p>
+                            <p>🔹 تثبیت CC به عنوان شاخص محلی</p>
+                            <p>🔹 افزودن محصولات صنایع دستی</p>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Tech Stack Footer -->
+                <div class="mt-12 pt-8 border-t border-gray-200">
+                    <h4 class="text-lg font-bold text-brand-800 mb-4 text-center">زیرساخت فنی پیشنهادی</h4>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center text-sm">
+                        <div class="bg-brand-50 p-3 rounded text-brand-900 font-bold">React / Next.js</div>
+                        <div class="bg-brand-50 p-3 rounded text-brand-900 font-bold">Node.js / Express</div>
+                        <div class="bg-brand-50 p-3 rounded text-brand-900 font-bold">MongoDB</div>
+                        <div class="bg-brand-50 p-3 rounded text-brand-900 font-bold">Google OAuth</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-brand-900 text-brand-200 py-6 mt-8">
+        <div class="container mx-auto px-4 text-center text-sm">
+            <p class="mb-2">طرح جامع سامانه پایاپای کالای محلی (مُبادله)</p>
+            <p class="opacity-70">طراحی شده برای حفظ قدرت خرید خانوار</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- Navigation Logic ---
+        function switchTab(tabId) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            // Show selected tab
+            document.getElementById(tabId).classList.add('active');
+            
+            // Re-render charts if hidden (Chart.js quirk sometimes needs resize trigger)
+            if(tabId === 'home') renderInflationChart();
+            if(tabId === 'simulation') renderPortfolioChart();
+            
+            // Mobile menu close
+            document.getElementById('mobile-menu').classList.add('hidden');
+        }
+
+        function toggleMobileMenu() {
+            document.getElementById('mobile-menu').classList.toggle('hidden');
+        }
+
+        function scrollToId(id) {
+            document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // --- Data & State ---
+        // Mock Prices (Rial)
+        const prices = {
+            rice: 1000000,
+            lentils: 850000,
+            macaroni: 450000,
+            oil: 650000
+        };
+        
+        const labels = {
+            rice: 'برنج',
+            lentils: 'عدس',
+            macaroni: 'ماکارونی',
+            oil: 'روغن'
+        };
+
+        // User Assets State
+        let assets = [];
+        let portfolioChartInstance = null;
+        let inflationChartInstance = null;
+
+        // --- Chart 1: Inflation Protection (Home) ---
+        function renderInflationChart() {
+            const ctx = document.getElementById('inflationChart').getContext('2d');
+            if (inflationChartInstance) inflationChartInstance.destroy();
+
+            inflationChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['ماه ۱', 'ماه ۲', 'ماه ۳', 'ماه ۴', 'ماه ۵', 'ماه ۶'],
+                    datasets: [{
+                        label: 'ارزش واقعی پول نقد (با تورم ۴۰٪)',
+                        data: [100, 96, 92, 88, 85, 82], // Simulated loss
+                        borderColor: '#f87171', // Red
+                        backgroundColor: 'rgba(248, 113, 113, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }, {
+                        label: 'ارزش سبد کالایی (مُبادله)',
+                        data: [100, 103, 107, 112, 116, 120], // Simulated keeping pace with inflation
+                        borderColor: '#4ade80', // Green
+                        backgroundColor: 'rgba(74, 222, 128, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.raw + ' واحد';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            title: { display: true, text: 'شاخص قدرت خرید' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- Chart 2: Portfolio Composition (Simulation) ---
+        function renderPortfolioChart() {
+            const ctx = document.getElementById('portfolioChart').getContext('2d');
+            if (portfolioChartInstance) portfolioChartInstance.destroy();
+
+            // Aggregate data for chart
+            const dataMap = {};
+            assets.forEach(a => {
+                if(!dataMap[a.type]) dataMap[a.type] = 0;
+                dataMap[a.type] += a.rialValue;
+            });
+
+            const chartLabels = Object.keys(dataMap).map(k => labels[k]);
+            const chartData = Object.values(dataMap);
+            const chartColors = ['#aa7e40', '#d1b278', '#c59a53', '#896136'];
+
+            if (chartData.length === 0) {
+                // Empty state
+                portfolioChartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['خالی'],
+                        datasets: [{ data: [1], backgroundColor: ['#e5e7eb'] }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+                return;
+            }
+
+            portfolioChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: chartLabels,
+                    datasets: [{
+                        data: chartData,
+                        backgroundColor: chartColors,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.raw;
+                                    return ' ' + value.toLocaleString() + ' ریال';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- Logic: Add Asset ---
+        function addAsset() {
+            const typeSelect = document.getElementById('assetType');
+            const amountInput = document.getElementById('assetAmount');
+            
+            const type = typeSelect.value;
+            const amount = parseFloat(amountInput.value);
+            const unitPrice = parseFloat(typeSelect.options[typeSelect.selectedIndex].getAttribute('data-price'));
+            
+            if (amount <= 0) return;
+
+            const totalRial = amount * unitPrice;
+            const ccValue = totalRial / 100000; // 1 CC = 100,000 Rials
+
+            // Add to state
+            assets.push({
+                id: Date.now(),
+                type: type,
+                amount: amount,
+                unitPrice: unitPrice,
+                rialValue: totalRial,
+                ccValue: ccValue
+            });
+
+            // Update UI
+            updateDashboard();
+            
+            // Reset form
+            amountInput.value = 1;
+        }
+
+        // --- Logic: Remove Asset ---
+        function removeAsset(id) {
+            assets = assets.filter(a => a.id !== id);
+            updateDashboard();
+        }
+
+        // --- Update Dashboard UI ---
+        function updateDashboard() {
+            const tableBody = document.getElementById('assetsTableBody');
+            tableBody.innerHTML = '';
+
+            let totalRial = 0;
+            let totalCC = 0;
+
+            if (assets.length === 0) {
+                tableBody.innerHTML = '<tr class="text-gray-400 italic text-center"><td colspan="4" class="p-4">هنوز کالایی ثبت نشده است.</td></tr>';
+            } else {
+                assets.forEach(asset => {
+                    totalRial += asset.rialValue;
+                    totalCC += asset.ccValue;
+
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-gray-50 transition";
+                    tr.innerHTML = `
+                        <td class="p-2 font-medium">${labels[asset.type]}</td>
+                        <td class="p-2">${asset.amount}</td>
+                        <td class="p-2 font-bold text-brand-700">${asset.ccValue.toFixed(1)}</td>
+                        <td class="p-2"><button onclick="removeAsset(${asset.id})" class="text-red-400 hover:text-red-600 font-bold">×</button></td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
+            }
+
+            // Update Totals
+            document.getElementById('totalRial').innerText = totalRial.toLocaleString();
+            document.getElementById('totalCC').innerText = totalCC.toFixed(1);
+            document.getElementById('totalItems').innerText = assets.length;
+
+            // Update Chart
+            renderPortfolioChart();
+        }
+
+        // --- Initialization ---
+        window.addEventListener('load', () => {
+            renderInflationChart();
+            renderPortfolioChart();
+        });
+
+    </script>
+</body>
+</html>
