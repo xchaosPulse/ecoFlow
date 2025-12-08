@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>سامانه پایاپای کالای محلی (مُبادله)</title>
     
+    <!-- Social Media Metadata (Thumbnail/Preview) -->
+    <meta property="og:title" content="مُبادله: سامانه پایاپای کالای محلی">
+    <meta property="og:description" content="حفظ قدرت خرید با کالای واقعی. سیستم اعتبار کالای محلی را شبیه‌سازی کنید.">
+    <meta property="og:image" content="https://placehold.co/1200x630/c59a53/ffffff?text=Mobadeleh+Barter+System">
+    <meta property="og:url" content="https://your-app-url.com/mobadeleh">
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -35,6 +41,7 @@
                         accent: {
                             green: '#4ade80', // Growth/Profit
                             red: '#f87171',   // Inflation/Loss
+                            blue: '#60a5fa',  // Cash Sale
                         }
                     },
                     fontFamily: {
@@ -96,16 +103,15 @@
     <!-- Chosen Palette: Warm Earth & Trust (Brand: Gold/Brown, Background: Cream) -->
     <!-- Application Structure Plan: 
          1. Hero Section: Clear value proposition based on the Executive Summary.
-         2. Economic Simulator (Dashboard): The core interactive element. Users can 'add' items to a virtual pantry to see how Rials convert to Commodity Credit (CC) and visualize inflation protection.
-         3. Marketplace Preview: Simulates the 'Local Market' search functionality with filters (Goods vs Cash).
+         2. Economic Simulator (Dashboard): The core interactive element. Users can 'add' items to a virtual pantry to see how Rials convert to Commodity Credit (CC) and visualize inflation protection. Data is now persisted using localStorage.
+         3. Marketplace Preview: Simulates the 'Local Market' search functionality, now dynamically updated based on the persisted CC credit from the Simulator.
          4. Roadmap & Tech Stack: Interactive timeline and grid for the phased rollout plan.
-         5. Educational Layer: Explains the Pricing System and Value Unit logic.
-         Rationale: This structure moves from "Why" (Hero) to "How" (Simulator) to "What Next" (Roadmap), mirroring the user's journey of understanding. -->
+         Rationale: This structure moves from "Why" (Hero) to "How" (Simulator) to "What Next" (Roadmap), mirroring the user's journey of understanding, now enhanced with cross-section data persistence. -->
     <!-- Visualization & Content Choices:
          1. Value Retention Chart (Line): Compares Cash vs. Goods over time (Simulated Inflation). Goal: Inform/Convince.
-         2. Portfolio Donut Chart: Visualizes the user's asset mix. Goal: Inform.
+         2. Portfolio Donut Chart: Visualizes the user's asset mix (persisted). Goal: Inform.
          3. Dynamic Conversion Calculator: Inputs for Good/Weight -> Outputs CC. Goal: Interact/Understand logic.
-         4. Process Cards: Simple icon-based flow for the exchange mechanism. Goal: Educate.
+         4. Marketplace Cards: Dynamic status (Can Trade/Insufficient Credit) based on the current CC balance. Goal: Integrate/Action.
     -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
 </head>
@@ -213,7 +219,7 @@
             <div class="bg-brand-50 border-l-4 border-brand-600 p-6 rounded-r-lg">
                 <h2 class="text-2xl font-bold text-brand-900 mb-2">داشبورد شبیه‌سازی دارایی</h2>
                 <p class="text-brand-800 text-justify">
-                    در این بخش، شما می‌توانید نحوه کارکرد سیستم «اعتبار کالا» (CC) را تجربه کنید. تصور کنید مقداری کالا خریداری کرده‌اید. آنها را به لیست دارایی‌های خود اضافه کنید تا ببینید چگونه ارزش ریالی آنها محاسبه شده و به اعتبار سیستم تبدیل می‌شود. این داشبورد به شما کمک می‌کند تا مفهوم <strong>حفظ ارزش</strong> را در عمل درک کنید.
+                    در این بخش، شما می‌توانید نحوه کارکرد سیستم «اعتبار کالا» (CC) را تجربه کنید. تصور کنید مقداری کالا خریداری کرده‌اید. آنها را به لیست دارایی‌های خود اضافه کنید تا ببینید چگونه ارزش ریالی آنها محاسبه شده و به اعتبار سیستم تبدیل می‌شود. این داشبورد به شما کمک می‌کند تا مفهوم <strong>حفظ ارزش</strong> را در عمل درک کنید. با رفرش کردن صفحه، موجودی شما همچنان حفظ خواهد شد.
                 </p>
             </div>
 
@@ -261,7 +267,7 @@
                         </div>
                         <div class="bg-white p-4 rounded-xl shadow border-b-4 border-accent-green">
                             <p class="text-gray-500 text-xs mb-1">موجودی اعتبار (CC)</p>
-                            <p id="totalCC" class="text-2xl font-black text-brand-600">0</p>
+                            <p id="totalCCDisplay" class="text-2xl font-black text-brand-600">0</p>
                             <p class="text-xs text-gray-400">واحد اعتبار</p>
                         </div>
                         <div class="bg-white p-4 rounded-xl shadow border-b-4 border-blue-400 col-span-2 md:col-span-1">
@@ -293,9 +299,6 @@
                                     </thead>
                                     <tbody id="assetsTableBody" class="divide-y divide-gray-100">
                                         <!-- Rows added by JS -->
-                                        <tr class="text-gray-400 italic text-center">
-                                            <td colspan="4" class="p-4">هنوز کالایی ثبت نشده است.</td>
-                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -310,7 +313,7 @@
             <div class="bg-white p-8 rounded-2xl shadow-sm text-center border border-gray-200">
                 <h2 class="text-2xl font-bold text-brand-900 mb-4">بازار محلی (نمونه آزمایشی)</h2>
                 <p class="text-gray-600 max-w-2xl mx-auto mb-8">
-                    در این بخش می‌توانید کالاهای موجود در محله خود (شعاع ۵ کیلومتری) را جستجو کنید. این داده‌ها فرضی هستند تا نحوه تعامل کاربران برای معاوضه یا خرید نقدی را نمایش دهند.
+                    در این بخش می‌توانید کالاهای موجود در محله خود (شعاع ۵ کیلومتری) را جستجو کنید. وضعیت اعتبار CC شما از بخش شبیه‌ساز خوانده می‌شود و نشان می‌دهد آیا می‌توانید این مبادلات را انجام دهید یا خیر.
                 </p>
 
                 <!-- Search Bar -->
@@ -326,96 +329,8 @@
                 </div>
 
                 <!-- Market Grid -->
-                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 text-right">
-                    <!-- Item 1 -->
-                    <div class="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-xl transition group relative overflow-hidden">
-                        <div class="absolute top-0 left-0 bg-accent-green text-white text-xs px-2 py-1 rounded-br-lg z-10">مبادله با کالا</div>
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <h3 class="font-bold text-lg text-gray-800">۱۰ کیلوگرم برنج طارم</h3>
-                                <p class="text-sm text-gray-500">فاصله: ۵۰۰ متر</p>
-                            </div>
-                            <div class="text-2xl">🍚</div>
-                        </div>
-                        <div class="bg-brand-50 p-3 rounded-lg mb-4">
-                            <div class="flex justify-between text-sm mb-1">
-                                <span class="text-gray-600">ارزش روز:</span>
-                                <span class="font-bold text-brand-700">۱۰,۰۰۰,۰۰۰ ریال</span>
-                            </div>
-                            <div class="flex justify-between text-sm">
-                                <span class="text-gray-600">اعتبار مورد نیاز:</span>
-                                <span class="font-bold text-brand-700">۱۰۰ CC</span>
-                            </div>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <div class="flex items-center gap-1">
-                                <span class="text-yellow-400">★</span>
-                                <span class="text-sm font-bold text-gray-700">۴.۸</span>
-                                <span class="text-xs text-gray-400">(۱۲ معامله)</span>
-                            </div>
-                            <button class="text-brand-600 hover:text-brand-800 text-sm font-bold border border-brand-200 hover:border-brand-600 px-3 py-1 rounded transition">درخواست مبادله</button>
-                        </div>
-                    </div>
-
-                    <!-- Item 2 -->
-                    <div class="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-xl transition group relative">
-                        <div class="absolute top-0 left-0 bg-blue-500 text-white text-xs px-2 py-1 rounded-br-lg z-10">فروش نقدی</div>
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <h3 class="font-bold text-lg text-gray-800">۵ بسته ماکارونی</h3>
-                                <p class="text-sm text-gray-500">فاصله: ۱.۲ کیلومتر</p>
-                            </div>
-                            <div class="text-2xl">🍝</div>
-                        </div>
-                        <div class="bg-brand-50 p-3 rounded-lg mb-4">
-                            <div class="flex justify-between text-sm mb-1">
-                                <span class="text-gray-600">ارزش روز:</span>
-                                <span class="font-bold text-brand-700">۲,۲۵۰,۰۰۰ ریال</span>
-                            </div>
-                            <div class="flex justify-between text-sm">
-                                <span class="text-gray-600">قیمت پیشنهادی:</span>
-                                <span class="font-bold text-brand-700">۲,۰۰۰,۰۰۰ ریال</span>
-                            </div>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <div class="flex items-center gap-1">
-                                <span class="text-yellow-400">★</span>
-                                <span class="text-sm font-bold text-gray-700">۵.۰</span>
-                                <span class="text-xs text-gray-400">(۵ معامله)</span>
-                            </div>
-                            <button class="text-brand-600 hover:text-brand-800 text-sm font-bold border border-brand-200 hover:border-brand-600 px-3 py-1 rounded transition">چت با فروشنده</button>
-                        </div>
-                    </div>
-
-                    <!-- Item 3 -->
-                    <div class="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-xl transition group relative">
-                         <div class="absolute top-0 left-0 bg-accent-green text-white text-xs px-2 py-1 rounded-br-lg z-10">مبادله با کالا</div>
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <h3 class="font-bold text-lg text-gray-800">۳ کیلوگرم عدس</h3>
-                                <p class="text-sm text-gray-500">فاصله: ۲۰۰ متر</p>
-                            </div>
-                            <div class="text-2xl">🥫</div>
-                        </div>
-                        <div class="bg-brand-50 p-3 rounded-lg mb-4">
-                            <div class="flex justify-between text-sm mb-1">
-                                <span class="text-gray-600">ارزش روز:</span>
-                                <span class="font-bold text-brand-700">۲,۵۵۰,۰۰۰ ریال</span>
-                            </div>
-                            <div class="flex justify-between text-sm">
-                                <span class="text-gray-600">اعتبار مورد نیاز:</span>
-                                <span class="font-bold text-brand-700">۲۵.۵ CC</span>
-                            </div>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <div class="flex items-center gap-1">
-                                <span class="text-gray-300">★</span>
-                                <span class="text-sm font-bold text-gray-500">-</span>
-                                <span class="text-xs text-gray-400">(کاربر جدید)</span>
-                            </div>
-                            <button class="text-brand-600 hover:text-brand-800 text-sm font-bold border border-brand-200 hover:border-brand-600 px-3 py-1 rounded transition">درخواست مبادله</button>
-                        </div>
-                    </div>
+                <div id="marketplaceGrid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 text-right">
+                    <!-- Dynamic Market Items rendered by JS -->
                 </div>
             </div>
         </div>
@@ -498,29 +413,6 @@
 
     <!-- JavaScript Logic -->
     <script>
-        // --- Navigation Logic ---
-        function switchTab(tabId) {
-            // Hide all tabs
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            // Show selected tab
-            document.getElementById(tabId).classList.add('active');
-            
-            // Re-render charts if hidden (Chart.js quirk sometimes needs resize trigger)
-            if(tabId === 'home') renderInflationChart();
-            if(tabId === 'simulation') renderPortfolioChart();
-            
-            // Mobile menu close
-            document.getElementById('mobile-menu').classList.add('hidden');
-        }
-
-        function toggleMobileMenu() {
-            document.getElementById('mobile-menu').classList.toggle('hidden');
-        }
-
-        function scrollToId(id) {
-            document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
-        }
-
         // --- Data & State ---
         // Mock Prices (Rial)
         const prices = {
@@ -537,10 +429,65 @@
             oil: 'روغن'
         };
 
+        // Mock Marketplace Items
+        const marketplaceItems = [
+            { id: 1, name: '۱۰ کیلوگرم برنج طارم', icon: '🍚', distance: '۵۰۰ متر', rialValue: 10000000, ccRequired: 100.0, type: 'barter', rating: 4.8, deals: 12 },
+            { id: 2, name: '۵ بسته ماکارونی', icon: '🍝', distance: '۱.۲ کیلومتر', rialValue: 2250000, cashPrice: 2000000, type: 'cash', rating: 5.0, deals: 5 },
+            { id: 3, name: '۳ کیلوگرم عدس', icon: '🥫', distance: '۲۰۰ متر', rialValue: 2550000, ccRequired: 25.5, type: 'barter', rating: 0, deals: 0 },
+            { id: 4, name: '۲ لیتر روغن سرخ‌کردنی', icon: '🌻', distance: '۸۰۰ متر', rialValue: 1300000, ccRequired: 13.0, type: 'barter', rating: 4.2, deals: 2 },
+            { id: 5, name: '۵ کیلوگرم برنج هاشمی', icon: '🌾', distance: '۴۰۰ متر', rialValue: 5500000, ccRequired: 55.0, type: 'barter', rating: 4.9, deals: 25 },
+        ];
+
         // User Assets State
         let assets = [];
+        let totalCC = 0;
         let portfolioChartInstance = null;
         let inflationChartInstance = null;
+
+        // --- Persistence Logic ---
+        function saveAssets() {
+            localStorage.setItem('mobadeleh_assets', JSON.stringify(assets));
+        }
+
+        function loadAssets() {
+            const storedAssets = localStorage.getItem('mobadeleh_assets');
+            if (storedAssets) {
+                assets = JSON.parse(storedAssets);
+            }
+        }
+
+        // --- Core Calculation ---
+        function calculateTotals() {
+            let rial = 0;
+            let cc = 0;
+            assets.forEach(asset => {
+                rial += asset.rialValue;
+                cc += asset.ccValue;
+            });
+            totalCC = cc;
+            return { totalRial: rial, totalCC: cc, totalItems: assets.length };
+        }
+
+        // --- Navigation Logic ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            
+            // Re-render charts and dynamic content when switching tabs
+            if (tabId === 'home') renderInflationChart();
+            if (tabId === 'simulation') renderPortfolioChart();
+            if (tabId === 'market') renderMarketplace();
+
+            document.getElementById('mobile-menu').classList.add('hidden');
+        }
+
+        function toggleMobileMenu() {
+            document.getElementById('mobile-menu').classList.toggle('hidden');
+        }
+
+        function scrollToId(id) {
+            document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+        }
 
         // --- Chart 1: Inflation Protection (Home) ---
         function renderInflationChart() {
@@ -656,7 +603,7 @@
             const amount = parseFloat(amountInput.value);
             const unitPrice = parseFloat(typeSelect.options[typeSelect.selectedIndex].getAttribute('data-price'));
             
-            if (amount <= 0) return;
+            if (amount <= 0 || isNaN(amount)) return;
 
             const totalRial = amount * unitPrice;
             const ccValue = totalRial / 100000; // 1 CC = 100,000 Rials
@@ -671,8 +618,9 @@
                 ccValue: ccValue
             });
 
-            // Update UI
+            // Update UI & Persist
             updateDashboard();
+            saveAssets();
             
             // Reset form
             amountInput.value = 1;
@@ -681,7 +629,9 @@
         // --- Logic: Remove Asset ---
         function removeAsset(id) {
             assets = assets.filter(a => a.id !== id);
+            // Update UI & Persist
             updateDashboard();
+            saveAssets();
         }
 
         // --- Update Dashboard UI ---
@@ -689,16 +639,12 @@
             const tableBody = document.getElementById('assetsTableBody');
             tableBody.innerHTML = '';
 
-            let totalRial = 0;
-            let totalCC = 0;
+            const totals = calculateTotals();
 
             if (assets.length === 0) {
                 tableBody.innerHTML = '<tr class="text-gray-400 italic text-center"><td colspan="4" class="p-4">هنوز کالایی ثبت نشده است.</td></tr>';
             } else {
                 assets.forEach(asset => {
-                    totalRial += asset.rialValue;
-                    totalCC += asset.ccValue;
-
                     const tr = document.createElement('tr');
                     tr.className = "hover:bg-gray-50 transition";
                     tr.innerHTML = `
@@ -711,19 +657,103 @@
                 });
             }
 
-            // Update Totals
-            document.getElementById('totalRial').innerText = totalRial.toLocaleString();
-            document.getElementById('totalCC').innerText = totalCC.toFixed(1);
-            document.getElementById('totalItems').innerText = assets.length;
+            // Update Totals Display
+            document.getElementById('totalRial').innerText = totals.totalRial.toLocaleString();
+            document.getElementById('totalCCDisplay').innerText = totals.totalCC.toFixed(1);
+            document.getElementById('totalItems').innerText = totals.totalItems;
 
             // Update Chart
             renderPortfolioChart();
+            
+            // Ensure marketplace reflects new credit immediately
+            if (document.getElementById('market').classList.contains('active')) {
+                renderMarketplace();
+            }
         }
+        
+        // --- Marketplace Logic ---
+        function renderMarketplace() {
+            const grid = document.getElementById('marketplaceGrid');
+            grid.innerHTML = '';
+            
+            const currentCC = totalCC; // Use global totalCC updated by updateDashboard/calculateTotals
+
+            marketplaceItems.forEach(item => {
+                const isBarter = item.type === 'barter';
+                const canAfford = isBarter && item.ccRequired <= currentCC;
+                
+                let statusTag, actionButton, actionColor, actionText;
+
+                if (isBarter) {
+                    if (canAfford) {
+                        statusTag = '<div class="absolute top-0 left-0 bg-accent-green text-white text-xs px-2 py-1 rounded-br-lg z-10">اعتبار کافی | مبادله با کالا</div>';
+                        actionButton = `<button class="text-brand-600 hover:text-brand-800 text-sm font-bold border border-brand-200 hover:border-brand-600 px-3 py-1 rounded transition">درخواست مبادله</button>`;
+                        actionColor = 'text-brand-700';
+                        actionText = `${item.ccRequired.toFixed(1)} CC`;
+                    } else {
+                        statusTag = `<div class="absolute top-0 left-0 bg-red-500 text-white text-xs px-2 py-1 rounded-br-lg z-10">کسری اعتبار (${(item.ccRequired - currentCC).toFixed(1)} CC)</div>`;
+                        actionButton = `<button disabled class="text-gray-400 bg-gray-100 text-sm font-bold border border-gray-200 px-3 py-1 rounded cursor-not-allowed">اعتبار کافی نیست</button>`;
+                        actionColor = 'text-red-500';
+                        actionText = `${item.ccRequired.toFixed(1)} CC`;
+                    }
+                } else { // Cash item
+                    statusTag = '<div class="absolute top-0 left-0 bg-accent-blue text-white text-xs px-2 py-1 rounded-br-lg z-10">فروش نقدی</div>';
+                    actionButton = `<button class="text-accent-blue hover:text-blue-700 text-sm font-bold border border-brand-200 hover:border-accent-blue px-3 py-1 rounded transition">چت با فروشنده</button>`;
+                    actionColor = 'text-gray-700';
+                    actionText = `${item.cashPrice.toLocaleString()} ریال`;
+                }
+
+                let ratingDisplay;
+                if (item.rating > 0) {
+                    ratingDisplay = `<div class="flex items-center gap-1">
+                                <span class="text-yellow-400">★</span>
+                                <span class="text-sm font-bold text-gray-700">${item.rating.toFixed(1)}</span>
+                                <span class="text-xs text-gray-400">(${item.deals} معامله)</span>
+                            </div>`;
+                } else {
+                    ratingDisplay = `<div class="flex items-center gap-1">
+                                <span class="text-gray-300">★</span>
+                                <span class="text-xs text-gray-400">(کاربر جدید)</span>
+                            </div>`;
+                }
+
+                const cardHTML = `
+                    <div class="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-xl transition group relative overflow-hidden">
+                        ${statusTag}
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="font-bold text-lg text-gray-800">${item.name}</h3>
+                                <p class="text-sm text-gray-500">فاصله: ${item.distance}</p>
+                            </div>
+                            <div class="text-2xl">${item.icon}</div>
+                        </div>
+                        <div class="bg-brand-50 p-3 rounded-lg mb-4">
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-600">ارزش روز:</span>
+                                <span class="font-bold text-brand-700">${item.rialValue.toLocaleString()} ریال</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">${isBarter ? 'اعتبار مورد نیاز:' : 'قیمت پیشنهادی:'}</span>
+                                <span class="font-bold ${actionColor}">${actionText}</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            ${ratingDisplay}
+                            ${actionButton}
+                        </div>
+                    </div>
+                `;
+                grid.insertAdjacentHTML('beforeend', cardHTML);
+            });
+        }
+
 
         // --- Initialization ---
         window.addEventListener('load', () => {
+            loadAssets();
+            updateDashboard(); // Will calculate totals and render charts/table
             renderInflationChart();
-            renderPortfolioChart();
+            renderMarketplace(); // Initial render of marketplace
         });
 
     </script>
