@@ -8,21 +8,30 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;700;900&display=swap" rel="stylesheet">
+
+    <meta property="og:title" content="اقتصاد اسلامی: مسیر میانه طلایی">
+    <meta property="og:description"
+        content="تحلیل تطبیقی و جامع اقتصاد اسلامی در برابر نظام‌های لیبرالیسم و کمونیسم با داده‌های کلیدی.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://yourdomain.com/islamic-economics-infographic">
+    <meta property="og:image" content="https://placehold.co/1200x630/10b981/ffffff?text=Islamic+Economics">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="اقتصاد اسلامی: مسیر میانه طلایی">
+    <meta name="twitter:description"
+        content="تحلیل تطبیقی و جامع اقتصاد اسلامی در برابر نظام‌های لیبرالیسم و کمونیسم با داده‌های کلیدی.">
+    <meta name="twitter:image" content="https://placehold.co/1200x630/10b981/ffffff?text=Islamic+Economics">
+
     <style>
         body {
             font-family: 'Vazirmatn', sans-serif;
             background-color: #f0f9ff;
-            /* Light Sky */
             color: #0f172a;
-            /* Slate 900 */
         }
 
-        /* Custom Palette - Vibrant & Professional */
         .bg-primary {
             background-color: #0369a1;
         }
 
-        /* Sky 700 */
         .text-primary {
             color: #0369a1;
         }
@@ -31,7 +40,6 @@
             background-color: #10b981;
         }
 
-        /* Emerald 500 */
         .text-accent-islam {
             color: #10b981;
         }
@@ -40,7 +48,6 @@
             background-color: #6366f1;
         }
 
-        /* Indigo 500 */
         .text-accent-cap {
             color: #6366f1;
         }
@@ -49,7 +56,6 @@
             background-color: #f43f5e;
         }
 
-        /* Rose 500 */
         .text-accent-com {
             color: #f43f5e;
         }
@@ -70,7 +76,6 @@
             }
         }
 
-        /* Hide scrollbar for cleaner look */
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -88,33 +93,10 @@
             background: #94a3b8;
         }
     </style>
-    <!--
-        NARRATIVE PLAN:
-        1. Introduction: Define Islamic Economics as an independent "Golden Middle Way".
-        2. Core Philosophy (Radar Chart): Visualizing the balance between Spirit, Individual, and Society.
-        3. Ownership Structure (Bar Chart): Comparing Private vs. State ownership rights.
-        4. The Interest (Riba) Divide (Donut Chart): The stark contrast in financial engines.
-        5. Wealth Distribution (Stacked Bar/Custom HTML): How wealth circulates.
-        6. Conclusion: Summary of the Via Media.
-
-        PALETTE: "Vibrant Sky & Emerald"
-        - Background: Light Blue/White
-        - Primary Text: Deep Sky Blue
-        - Islam Data: Emerald Green (#10b981)
-        - Liberalism Data: Indigo (#6366f1)
-        - Communism Data: Rose (#f43f5e)
-
-        VISUALIZATION CHOICES (NO SVG):
-        - Radar Chart (Chart.js): To show multi-axis balance.
-        - Grouped Bar Chart (Chart.js): For direct comparison of attributes.
-        - Donut Chart (Chart.js): For composition of financial drivers.
-        - HTML/CSS Diagrams: For flow and hierarchy.
-    -->
 </head>
 
 <body class="antialiased selection:bg-emerald-200 selection:text-emerald-900">
 
-    <!-- Hero Section -->
     <header
         class="bg-gradient-to-br from-sky-800 to-indigo-900 text-white pt-20 pb-24 px-6 shadow-xl relative overflow-hidden">
         <div
@@ -133,10 +115,8 @@
         </div>
     </header>
 
-    <!-- Main Content Grid -->
     <main class="max-w-7xl mx-auto -mt-16 px-4 md:px-8 pb-20 space-y-24 relative z-20">
 
-        <!-- Section 1: The Three Pillars (Philosophy) -->
         <section class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center bg-white rounded-3xl shadow-lg p-8 md:p-12">
             <div class="space-y-6">
                 <div class="flex items-center space-x-3 space-x-reverse">
@@ -170,7 +150,6 @@
                 </ul>
             </div>
 
-            <!-- VIZ: Radar Chart for Philosophy -->
             <div
                 class="bg-slate-50 rounded-2xl p-4 shadow-inner border border-slate-100 flex flex-col items-center justify-center">
                 <h3 class="text-center font-bold text-slate-500 mb-4 text-sm">توازن شاخص‌های کلیدی</h3>
@@ -181,7 +160,6 @@
             </div>
         </section>
 
-        <!-- Section 2: Ownership & Property -->
         <section>
             <div class="text-center max-w-3xl mx-auto mb-12">
                 <h2 class="text-3xl md:text-4xl font-bold text-slate-800 mb-4">مالکیت: حق فرد یا دولت؟</h2>
@@ -192,7 +170,6 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Capitalism Card -->
                 <div
                     class="bg-white rounded-xl shadow-md p-6 border-t-4 border-indigo-500 hover:shadow-xl transition-shadow duration-300">
                     <h3 class="text-xl font-bold text-indigo-700 mb-2">لیبرالیسم</h3>
@@ -205,7 +182,6 @@
                     <span class="text-xs text-indigo-600 font-bold">۹۵٪ آزادی مالکیت</span>
                 </div>
 
-                <!-- Islam Card -->
                 <div
                     class="bg-white rounded-xl shadow-md p-6 border-t-4 border-emerald-500 transform md:-translate-y-4 hover:shadow-xl transition-shadow duration-300 relative">
                     <div
@@ -221,7 +197,6 @@
                     <span class="text-xs text-emerald-600 font-bold">۶۰٪ آزادی + ۴۰٪ مسئولیت اجتماعی</span>
                 </div>
 
-                <!-- Communism Card -->
                 <div
                     class="bg-white rounded-xl shadow-md p-6 border-t-4 border-rose-500 hover:shadow-xl transition-shadow duration-300">
                     <h3 class="text-xl font-bold text-rose-700 mb-2">کمونیسم</h3>
@@ -235,7 +210,6 @@
                 </div>
             </div>
 
-            <!-- VIZ: Comparison Bar Chart -->
             <div class="mt-12 bg-white rounded-2xl shadow-lg p-6 md:p-8">
                 <div class="flex flex-col md:flex-row justify-between items-center mb-6">
                     <h3 class="text-2xl font-bold text-slate-700">شاخص‌های مقایسه‌ای نظام‌ها</h3>
@@ -252,10 +226,8 @@
             </div>
         </section>
 
-        <!-- Section 3: The Red Line - RIBA -->
         <section
             class="bg-gradient-to-r from-slate-900 to-slate-800 rounded-3xl shadow-2xl p-8 md:p-12 text-white overflow-hidden relative">
-            <!-- Decorative circle -->
             <div class="absolute -right-20 -top-20 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl"></div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center relative z-10">
@@ -267,10 +239,8 @@
                         <strong>اقتصاد واقعی</strong> و مشارکت در سود و زیان تأکید دارد، نه خلق پول از پول.
                     </p>
 
-                    <!-- HTML Diagram for Riba vs Trade -->
                     <div class="bg-white/10 rounded-xl p-6 backdrop-blur-sm border border-white/10">
                         <div class="flex flex-col space-y-4">
-                            <!-- Capitalist Flow -->
                             <div class="flex items-center justify-between text-sm">
                                 <div class="bg-indigo-600 px-3 py-2 rounded text-white font-bold w-20 text-center">پول
                                 </div>
@@ -285,7 +255,6 @@
                             <div class="text-center text-xs text-red-300 font-bold border-b border-white/20 pb-2">
                                 سرمایه‌داری (ربا): پول، کالا می‌شود.</div>
 
-                            <!-- Islamic Flow -->
                             <div class="flex items-center justify-between text-sm pt-2">
                                 <div class="bg-emerald-600 px-3 py-2 rounded text-white font-bold w-20 text-center">پول
                                 </div>
@@ -316,9 +285,7 @@
             </div>
         </section>
 
-        <!-- Section 4: Social Justice & Conclusion -->
         <section class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Justice Panel -->
             <div class="lg:col-span-2 bg-white rounded-3xl shadow-lg p-8">
                 <div class="flex items-center mb-6">
                     <div
@@ -362,7 +329,6 @@
                 </div>
             </div>
 
-            <!-- Conclusion Summary -->
             <div class="bg-emerald-600 rounded-3xl shadow-lg p-8 text-white flex flex-col justify-center">
                 <h2 class="text-2xl font-bold mb-4 border-b border-emerald-400 pb-4">نتیجه‌گیری</h2>
                 <p class="text-emerald-100 leading-relaxed mb-6">
@@ -394,13 +360,11 @@
 
     </main>
 
-    <!-- Footer -->
     <footer class="bg-slate-900 text-slate-400 py-8 text-center text-sm">
         <p>تحلیل تطبیقی بر اساس مستندات اقتصاد اسلامی (شهید صدر، اقتصادنا) • طراحی شده با رویکرد داده‌محور</p>
     </footer>
 
     <script>
-        // Utility: Label Wrapping Logic (Standard 16 char limit)
         function wrapLabels(labels) {
             return labels.map(label => {
                 if (label.length <= 16) return label;
@@ -420,7 +384,6 @@
             });
         }
 
-        // Shared Tooltip Configuration (Standard Requirement)
         const commonTooltipOptions = {
             callbacks: {
                 title: function (tooltipItems) {
@@ -435,7 +398,6 @@
             }
         };
 
-        // Chart 1: Philosophy Radar Chart
         const ctxRadar = document.getElementById('philosophyChart').getContext('2d');
         const labelsRadar = ['آزادی اقتصادی فردی', 'مداخله دولت', 'تمرکز بر معنویت', 'برابری توزیع ثروت', 'انگیزه سود شخصی'];
 
@@ -447,7 +409,7 @@
                     {
                         label: 'اسلام (مسیر میانه)',
                         data: [6, 5, 10, 8, 6],
-                        backgroundColor: 'rgba(16, 185, 129, 0.2)', // Emerald
+                        backgroundColor: 'rgba(16, 185, 129, 0.2)',
                         borderColor: '#10b981',
                         pointBackgroundColor: '#10b981',
                         borderWidth: 2
@@ -455,7 +417,7 @@
                     {
                         label: 'لیبرالیسم',
                         data: [9, 2, 1, 3, 10],
-                        backgroundColor: 'rgba(99, 102, 241, 0.1)', // Indigo
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
                         borderColor: '#6366f1',
                         pointBackgroundColor: '#6366f1',
                         borderWidth: 1,
@@ -464,7 +426,7 @@
                     {
                         label: 'کمونیسم',
                         data: [1, 10, 2, 9, 2],
-                        backgroundColor: 'rgba(244, 63, 94, 0.1)', // Rose
+                        backgroundColor: 'rgba(244, 63, 94, 0.1)',
                         borderColor: '#f43f5e',
                         pointBackgroundColor: '#f43f5e',
                         borderWidth: 1,
@@ -493,7 +455,6 @@
             }
         });
 
-        // Chart 2: Comparison Bar Chart (Grouped)
         const ctxBar = document.getElementById('comparisonBarChart').getContext('2d');
         const labelsBar = ['حق مالکیت خصوصی', 'حمایت از بازار آزاد', 'ممنوعیت انحصار/ربا', 'تامین اجتماعی اجباری'];
 
@@ -516,7 +477,7 @@
                     },
                     {
                         label: 'کمونیسم',
-                        data: [0, 1, 8, 10], // Note: Communism effectively bans monopoly by state monopoly, but bans private monopoly.
+                        data: [0, 1, 8, 10],
                         backgroundColor: '#f43f5e',
                         borderRadius: 4
                     }
@@ -543,7 +504,6 @@
             }
         });
 
-        // Chart 3: Finance Structure Donut
         const ctxDonut = document.getElementById('financeDonutChart').getContext('2d');
 
         new Chart(ctxDonut, {
@@ -551,11 +511,11 @@
             data: {
                 labels: wrapLabels(['مشارکت در سود و زیان (اسلامی)', 'بهره ثابت/ربا (لیبرالیسم)', 'بودجه دولتی (کمونیسم)']),
                 datasets: [{
-                    data: [40, 30, 30], // Conceptual representation of focus
+                    data: [40, 30, 30],
                     backgroundColor: [
-                        '#10b981', // Islamic - Emerald
-                        '#6366f1', // Cap - Indigo
-                        '#f43f5e'  // Com - Rose
+                        '#10b981',
+                        '#6366f1',
+                        '#f43f5e'
                     ],
                     borderWidth: 0,
                     hoverOffset: 4
