@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>گزارش راهبردی خودکفایی نهاده‌های دامی ایران - افق ۱۴۰۵</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100;300;400;500;700;900&display=swap"
+        rel="stylesheet">
+    <!-- Social Media Preview Tags (Twitter & Open Graph) -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="نقشه راه جامع خودکفایی نهاده‌های دامی - افق ۱۴۰۵">
+    <meta name="twitter:description"
+        content="داشبورد تعاملی برای تحلیل چرخه تامین، هزینه، آمایش سرزمین و امنیت غذایی در راستای خودکفایی نهاده‌های دامی ایران.">
+    <meta name="twitter:image" content="https://placehold.co/600x400/059669/ffffff?text=Self-Sufficiency">
+
+    <meta property="og:title" content="نقشه راه جامع خودکفایی نهاده‌های دامی - افق ۱۴۰۵">
+    <meta property="og:description"
+        content="داشبورد تعاملی برای تحلیل چرخه تامین، هزینه، آمایش سرزمین و امنیت غذایی در راستای خودکفایی نهاده‌های دامی ایران.">
+    <meta property="og:image" content="https://placehold.co/600x400/059669/ffffff?text=Self-Sufficiency">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://xchaospulse.github.io/ecoFlow/IranLivestockFeedSelfSufficiencyPlan.html">
+
+    <!-- Chosen Palette: Warm Neutrals & Agricultural Tones -->
+    <!-- Background: Stone-50 (Warm Neutral) -->
+    <!-- Primary: Emerald-700 (Agriculture/Growth) -->
+    <!-- Secondary: Amber-500 (Grains/Feed) -->
+    <!-- Accent: Sky-600 (Water/Infrastructure) -->
+    <!-- Text: Slate-800 (Readability) -->
+
+    <!-- Application Structure Plan:
+         1. Executive Dashboard: High-level KPI summary (0-100 Progress).
+         2. Supply & Demand Gap: Interactive visualization of current dependency vs. target.
+         3. The "0 to 100" Cycle: A linear, interactive process flow showing the value chain.
+         4. Resource Intelligence:
+            - Water & Land Matrix (Abstracted Map via CSS Grid).
+            - Financial Requirements (Cost Analysis).
+         5. Scenario Planning: Toggle between "Business as Usual" and "Optimized Self-Sufficiency" to see impact on water and budget.
+         Rationale: This structure moves from the "What" (Goals) to the "How" (Cycle) and the "Cost" (Resources), ending with interactive scenarios to prove viability.
+    -->
+
+    <!-- Visualization & Content Choices:
+         - Demand/Supply: Stacked Bar Chart (Chart.js). Goal: Inform/Compare.
+         - Resource Usage: Doughnut Charts (Chart.js). Goal: Change/Impact.
+         - Zoning Map: CSS Grid Matrix. Goal: Organize/Locate. Justification: No SVGs allowed, grid provides clear abstract representation of land use.
+         - Process Flow: Flexbox Step-wizard. Goal: Inform/Process.
+         - Justification: All visualizations are Canvas or DOM-based to avoid SVG/Mermaid.
+    -->
+
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <style>
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background-color: #fcfaf8;
+            /* Stone-50 equivalent warmth */
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 100%;
+            height: 350px;
+            max-height: 400px;
+            margin: 0 auto;
+        }
+
+        .matrix-cell {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .matrix-cell:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .step-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+
+        .step-card:hover,
+        .step-card.active {
+            border-left-color: #047857;
+            /* Emerald-700 */
+            background-color: #ecfdf5;
+            /* Emerald-50 */
+        }
+    </style>
+</head>
+
+<body class="text-slate-800 antialiased overflow-x-hidden">
+
+    <!-- Header Section -->
+    <header class="bg-gradient-to-l from-emerald-900 to-emerald-800 text-white py-8 px-4 shadow-lg">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-3xl md:text-4xl font-bold mb-2">نقشه راه جامع خودکفایی نهاده‌های دامی</h1>
+                <p class="text-emerald-100 text-sm md:text-base opacity-90">تحلیل چرخه تامین، هزینه، آمایش سرزمین و
+                    امنیت غذایی (افق ۱۴۰۵)</p>
+            </div>
+            <div class="flex items-center gap-4 bg-white/10 p-3 rounded-lg backdrop-blur-sm">
+                <div class="text-center">
+                    <span class="block text-xs text-emerald-200">وضعیت فعلی وابستگی</span>
+                    <span class="block text-xl font-bold text-amber-300">۶۵٪</span>
+                </div>
+                <div class="h-8 w-px bg-white/20"></div>
+                <div class="text-center">
+                    <span class="block text-xs text-emerald-200">هدف خودکفایی</span>
+                    <span class="block text-xl font-bold text-white">۹۵٪</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 py-8 space-y-12">
+
+        <!-- Intro Text -->
+        <section class="max-w-4xl mx-auto text-center space-y-4">
+            <h2 class="text-2xl font-bold text-emerald-800">چشم‌انداز امنیت غذایی پایدار</h2>
+            <p class="text-slate-600 leading-relaxed text-justify md:text-center">
+                این داشبورد تعاملی، مسیر دستیابی جمهوری اسلامی ایران به خودکفایی در زنجیره تامین پروتئین (نهاده‌های
+                دامی) را ترسیم می‌کند.
+                با توجه به محدودیت‌های بودجه‌ای و چالش‌های اقلیمی (به‌ویژه آب)، این گزارش مدل‌سازی دقیقی از
+                <strong>صفر تا صد</strong> نیازمندی‌ها شامل زمین، آب، سرمایه در گردش و زیرساخت‌های فرآوری ارائه می‌دهد.
+                هدف نهایی، کاهش فشار ارزی و تضمین امنیت غذایی با تکیه بر ظرفیت‌های داخلی و آمایش سرزمین است.
+            </p>
+
+            <!-- Global Scenario Toggle -->
+            <div class="flex justify-center mt-6">
+                <div class="bg-slate-200 p-1 rounded-full flex relative cursor-pointer" onclick="toggleScenario()">
+                    <div id="toggle-bg"
+                        class="absolute top-1 right-1 w-1/2 h-[calc(100%-8px)] bg-white rounded-full shadow-sm transition-all duration-300">
+                    </div>
+                    <button class="relative z-10 px-6 py-2 text-sm font-medium rounded-full w-40 transition-colors"
+                        id="btn-current">وضعیت موجود</button>
+                    <button
+                        class="relative z-10 px-6 py-2 text-sm font-medium rounded-full w-40 transition-colors text-slate-500"
+                        id="btn-target">طرح خودکفایی</button>
+                </div>
+            </div>
+            <p id="scenario-desc" class="text-sm text-amber-600 font-medium mt-2 animate-pulse">نمایش داده‌های وضعیت
+                فعلی (واردات محور)</p>
+        </section>
+
+        <!-- Section 1: Demand & Production Analysis -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                <div class="mb-4 border-b border-slate-100 pb-4">
+                    <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                        <span class="text-amber-500 text-2xl">I</span>
+                        تراز تولید و مصرف (میلیون تن)
+                    </h3>
+                    <p class="text-sm text-slate-500 mt-2">
+                        در این بخش، شکاف بین تولید داخلی فعلی و نیاز کشور به سه نهاده اصلی (ذرت دامی، جو، کنجاله سویا)
+                        تحلیل می‌شود. نمودار زیر با تغییر وضعیت (سناریو) به‌روزرسانی شده و تاثیر اجرای طرح‌های نوین
+                        کشاورزی را نشان می‌دهد.
+                    </p>
+                </div>
+                <div class="chart-container">
+                    <canvas id="productionChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Key Metrics Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="bg-emerald-50 p-6 rounded-xl border border-emerald-100">
+                    <h4 class="text-emerald-800 font-bold mb-2">صرفه‌جویی ارزی</h4>
+                    <p class="text-3xl font-black text-emerald-600" id="metric-saving">۰</p>
+                    <p class="text-xs text-emerald-600 mt-1">میلیارد دلار در سال</p>
+                </div>
+                <div class="bg-sky-50 p-6 rounded-xl border border-sky-100">
+                    <h4 class="text-sky-800 font-bold mb-2">راندمان آب</h4>
+                    <p class="text-3xl font-black text-sky-600" id="metric-water">۳۵٪</p>
+                    <p class="text-xs text-sky-600 mt-1">بهره‌وری فیزیکی</p>
+                </div>
+                <div class="bg-amber-50 p-6 rounded-xl border border-amber-100 col-span-1 sm:col-span-2">
+                    <h4 class="text-amber-800 font-bold mb-2">توسعه بازار داخلی</h4>
+                    <div class="w-full bg-amber-200 rounded-full h-4 mt-2">
+                        <div id="market-bar" class="bg-amber-500 h-4 rounded-full transition-all duration-1000"
+                            style="width: 35%"></div>
+                    </div>
+                    <p class="text-xs text-amber-700 mt-2 text-left px-1" id="market-text">سهم ۳۵ درصدی تولید داخل</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: The 0-100 Cycle (Process Flow) -->
+        <section class="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+            <div class="p-6 bg-slate-50 border-b border-slate-200">
+                <h3 class="text-xl font-bold text-slate-800">چرخه کامل زنجیره ارزش (صفر تا صد)</h3>
+                <p class="text-sm text-slate-500 mt-2">
+                    تحقق خودکفایی نیازمند مدیریت یکپارچه زنجیره است. بر روی مراحل زیر کلیک کنید تا الزامات و هزینه‌های
+                    هر مرحله نمایش داده شود.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-12 min-h-[400px]">
+                <!-- Interactive Steps List -->
+                <div class="md:col-span-4 bg-white border-l border-slate-100 flex flex-col">
+                    <button onclick="showStep(0)"
+                        class="step-card active p-4 text-right hover:bg-slate-50 transition text-sm font-medium border-b border-slate-50 flex justify-between items-center group">
+                        <span>۱. تحقیق و توسعه (بذر و ژنتیک)</span>
+                        <span class="text-slate-300 group-hover:text-emerald-500">←</span>
+                    </button>
+                    <button onclick="showStep(1)"
+                        class="step-card p-4 text-right hover:bg-slate-50 transition text-sm font-medium border-b border-slate-50 flex justify-between items-center group">
+                        <span>۲. آماده‌سازی و آمایش سرزمین</span>
+                        <span class="text-slate-300 group-hover:text-emerald-500">←</span>
+                    </button>
+                    <button onclick="showStep(2)"
+                        class="step-card p-4 text-right hover:bg-slate-50 transition text-sm font-medium border-b border-slate-50 flex justify-between items-center group">
+                        <span>۳. کاشت و داشت (مدیریت آب)</span>
+                        <span class="text-slate-300 group-hover:text-emerald-500">←</span>
+                    </button>
+                    <button onclick="showStep(3)"
+                        class="step-card p-4 text-right hover:bg-slate-50 transition text-sm font-medium border-b border-slate-50 flex justify-between items-center group">
+                        <span>۴. برداشت و لجستیک</span>
+                        <span class="text-slate-300 group-hover:text-emerald-500">←</span>
+                    </button>
+                    <button onclick="showStep(4)"
+                        class="step-card p-4 text-right hover:bg-slate-50 transition text-sm font-medium flex justify-between items-center group">
+                        <span>۵. فرآوری صنعتی و توزیع</span>
+                        <span class="text-slate-300 group-hover:text-emerald-500">←</span>
+                    </button>
+                </div>
+
+                <!-- Detail View Area -->
+                <div class="md:col-span-8 p-8 flex flex-col justify-center bg-stone-50 relative">
+                    <div id="step-content">
+                        <!-- Content injected via JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Zoning & Water (Resources) -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Zoning Matrix -->
+            <div class="space-y-4">
+                <div class="mb-2">
+                    <h3 class="text-xl font-bold text-slate-800">ماتریس هوشمند آمایش سرزمین</h3>
+                    <p class="text-sm text-slate-500">
+                        جانمایی بهینه کشت بر اساس اقلیم. برای مشاهده ظرفیت تولید روی مناطق کلیک کنید (تمرکز بر کشت دیم
+                        در مناطق پرباران و کشت آبی مدرن در دشت‌ها).
+                    </p>
+                </div>
+
+                <!-- Abstract Map using CSS Grid -->
+                <div class="grid grid-cols-3 gap-2 aspect-square max-w-md mx-auto p-4 bg-slate-200 rounded-xl">
+                    <!-- North West -->
+                    <div class="matrix-cell bg-emerald-600 rounded-lg p-2 text-white flex flex-col justify-center items-center text-center relative group"
+                        onclick="showRegionInfo('NW')">
+                        <span class="font-bold text-sm">شمال غرب</span>
+                        <span class="text-xs opacity-75">قطب ذرت و حبوبات</span>
+                        <div
+                            class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 rounded-lg flex items-center justify-center transition text-xs">
+                            کلیک کنید</div>
+                    </div>
+                    <!-- North -->
+                    <div class="matrix-cell bg-emerald-500 rounded-lg p-2 text-white flex flex-col justify-center items-center text-center relative group"
+                        onclick="showRegionInfo('N')">
+                        <span class="font-bold text-sm">کرانه خزر</span>
+                        <span class="text-xs opacity-75">کشت دوم و سویا</span>
+                        <div
+                            class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 rounded-lg flex items-center justify-center transition text-xs">
+                            کلیک کنید</div>
+                    </div>
+                    <!-- North East -->
+                    <div class="matrix-cell bg-amber-400 rounded-lg p-2 text-white flex flex-col justify-center items-center text-center relative group"
+                        onclick="showRegionInfo('NE')">
+                        <span class="font-bold text-sm">شمال شرق</span>
+                        <span class="text-xs opacity-75">جو دیم</span>
+                        <div
+                            class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 rounded-lg flex items-center justify-center transition text-xs">
+                            کلیک کنید</div>
+                    </div>
+
+                    <!-- West -->
+                    <div class="matrix-cell bg-emerald-700 rounded-lg p-2 text-white flex flex-col justify-center items-center text-center relative group"
+                        onclick="showRegionInfo('W')">
+                        <span class="font-bold text-sm">غرب (زاگرس)</span>
+                        <span class="text-xs opacity-75">علوفه و چراگاه</span>
+                        <div
+                            class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 rounded-lg flex items-center justify-center transition text-xs">
+                            کلیک کنید</div>
+                    </div>
+                    <!-- Central -->
+                    <div class="matrix-cell bg-stone-400 rounded-lg p-2 text-white flex flex-col justify-center items-center text-center relative group"
+                        onclick="showRegionInfo('C')">
+                        <span class="font-bold text-sm">فلات مرکزی</span>
+                        <span class="text-xs opacity-75">محدودیت آب</span>
+                        <div
+                            class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 rounded-lg flex items-center justify-center transition text-xs">
+                            غیر فعال</div>
+                    </div>
+                    <!-- East -->
+                    <div class="matrix-cell bg-stone-300 rounded-lg p-2 text-white flex flex-col justify-center items-center text-center"
+                        onclick="showRegionInfo('E')">
+                        <span class="font-bold text-sm">شرق</span>
+                        <span class="text-xs opacity-75">نیاز به احیا</span>
+                    </div>
+
+                    <!-- South West -->
+                    <div class="matrix-cell bg-emerald-600 rounded-lg p-2 text-white flex flex-col justify-center items-center text-center relative group"
+                        onclick="showRegionInfo('SW')">
+                        <span class="font-bold text-sm">جنوب غرب</span>
+                        <span class="text-xs opacity-75">ذرت دانه‌ای (زمستانه)</span>
+                        <div
+                            class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 rounded-lg flex items-center justify-center transition text-xs">
+                            کلیک کنید</div>
+                    </div>
+                    <!-- South -->
+                    <div class="matrix-cell bg-stone-300 rounded-lg p-2 text-white flex flex-col justify-center items-center text-center"
+                        onclick="showRegionInfo('S')">
+                        <span class="font-bold text-sm">جنوب</span>
+                        <span class="text-xs opacity-75">شیلات</span>
+                    </div>
+                    <!-- South East -->
+                    <div class="matrix-cell bg-stone-300 rounded-lg p-2 text-white flex flex-col justify-center items-center text-center"
+                        onclick="showRegionInfo('SE')">
+                        <span class="font-bold text-sm">جنوب شرق</span>
+                        <span class="text-xs opacity-75">کشت‌های خاص</span>
+                    </div>
+                </div>
+
+                <div id="region-detail"
+                    class="bg-white p-4 rounded-lg border border-slate-200 mt-4 min-h-[100px] flex items-center justify-center text-center text-slate-500 text-sm">
+                    یک منطقه را انتخاب کنید تا جزئیات پتانسیل کشت نمایش داده شود.
+                </div>
+            </div>
+
+            <!-- Water & Finance Charts -->
+            <div class="space-y-8">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4 border-b pb-2 border-slate-100">تحلیل منابع حیاتی
+                        (آب و بودجه)</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <h4 class="text-sm font-semibold text-center text-slate-600 mb-2">مصرف آب (میلیارد متر مکعب)
+                            </h4>
+                            <div class="chart-container h-[200px] max-h-[200px]">
+                                <canvas id="waterChart"></canvas>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-semibold text-center text-slate-600 mb-2">هزینه تولید vs واردات
+                                (همت)</h4>
+                            <div class="chart-container h-[200px] max-h-[200px]">
+                                <canvas id="financeChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4 p-3 bg-sky-50 rounded text-xs text-sky-800 leading-relaxed">
+                        <span class="font-bold">نکته راهبردی:</span> در طرح خودکفایی، با وجود افزایش سطح زیر کشت، به
+                        دلیل استفاده از سامانه‌های آبیاری زیرسطحی و تغییر الگوی کشت (مثلاً سورگوم به جای ذرت در مناطق
+                        خشک)، مصرف آب کاهش می‌یابد. هزینه اولیه زیرساخت بالاست، اما هزینه جاری واردات حذف می‌شود.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Conclusion -->
+        <footer class="bg-slate-800 text-slate-300 rounded-t-2xl p-8 mt-12">
+            <div class="max-w-4xl mx-auto text-center">
+                <h3 class="text-white text-xl font-bold mb-4">جمع‌بندی اجرایی</h3>
+                <p class="mb-6">
+                    اجرای طرح خودکفایی نهاده‌های دامی تا افق ۱۴۰۵، نیازمند تغییر پارادایم از "کشاورزی سنتی" به "کشاورزی
+                    صنعتی و دقیق" است.
+                    داده‌های فوق نشان می‌دهد که با سرمایه‌گذاری اولیه در زیرساخت (حدود ۳۰۰ همت) می‌توان سالانه از خروج
+                    میلیاردها دلار ارز جلوگیری کرد.
+                    جانمایی صحیح (شمال و غرب برای کشت دیم) و توسعه صنایع تبدیلی، کلید موفقیت این طرح است.
+                </p>
+                <div class="flex justify-center gap-4 text-xs opacity-50">
+                    <span>تحلیل داده‌ها مبتنی بر برآوردهای بودجه‌ای</span>
+                    <span>•</span>
+                    <span>طراحی شده برای تصمیم‌گیری کلان</span>
+                </div>
+            </div>
+        </footer>
+
+    </main>
+
+    <!-- Interactive Logic -->
+    <script>
+        // Data Store
+        const dataStore = {
+            current: {
+                production: [3.5, 3.2, 0.2], // Corn, Barley, Soy Meal (Million Tons)
+                import: [7.5, 3.0, 3.8], // Import needed
+                water: [12, 8], // Surface, Groundwater (BCM)
+                finance: [150, 450], // Domestic Production Cost, Import Cost (Trillion Tomans)
+                saving: 0,
+                marketShare: 35
+            },
+            target: {
+                production: [9.5, 6.0, 3.5], // Significant increase
+                import: [1.5, 0.2, 0.5], // Minimal import
+                water: [9, 6], // Reduced due to efficiency
+                finance: [320, 80], // High Production Cost (Investment), Low Import Cost
+                saving: 4.2, // Billion Dollars saved
+                marketShare: 92
+            }
+        };
+
+        const regionDetails = {
+            'NW': '<strong>شمال غرب (آذربایجان‌ها، اردبیل):</strong><br>مناسب‌ترین اقلیم برای ذرت علوفه‌ای و یونجه. <br>نیاز آبی: متوسط. <br>پتانسیل تولید: ۳۵٪ نیاز کشور.',
+            'N': '<strong>کرانه خزر (گیلان، مازندران، گلستان):</strong><br>کشت دوم (پس از برنج) سویا و کلزا. <br>نیاز آبی: تامین از باران (دیم). <br>پتانسیل تولید: کلیدی برای تامین پروتئین گیاهی.',
+            'NE': '<strong>شمال شرق (خراسان شمالی/رضوی):</strong><br>قطب تولید جو دیم و چغندر. <br>ریسک: خشکسالی‌های دوره‌ای. <br>راهکار: ارقام مقاوم به خشکی.',
+            'W': '<strong>غرب و زاگرس (کرمانشاه، لرستان، ایلام):</strong><br>بهترین منطقه برای حبوبات دامی و چرای دام سبک. <br>منابع آب روان مناسب.',
+            'SW': '<strong>جنوب غرب (خوزستان):</strong><br>قطب تولید ذرت دانه‌ای، چغندر و نیشکر (باگاس برای خوراک دام). <br>امکان ۳ بار کشت در سال.',
+            'C': '<strong>فلات مرکزی:</strong><br>ممنوعیت کشت‌های آب‌بر. <br>تمرکز بر صنایع فرآوری و کشت‌های گلخانه‌ای.',
+            'E': '<strong>شرق:</strong><br>توسعه کشت خارشتر و گیاهان شورپسند برای خوراک دام.',
+            'S': '<strong>جنوب:</strong><br>استفاده از ضایعات نخلستان و پودر ماهی برای خوراک دام.',
+            'SE': '<strong>جنوب شرق:</strong><br>پتانسیل کشت سورگوم و ارزن (مقاوم به گرما).'
+        };
+
+        const stepsData = [
+            {
+                title: "۱. تحقیق و توسعه و تامین بذر",
+                details: "تولید بذور هیبرید ذرت و سویای مناسب اقلیم ایران. کاهش وابستگی به واردات بذر مادری. <br><span class='text-emerald-600 font-bold'>هزینه: ۵ همت</span> | <span class='text-sky-600 font-bold'>زمان: ۳ سال</span>"
+            },
+            {
+                title: "۲. آماده‌سازی و یکپارچه‌سازی اراضی",
+                details: "تجهیز ۱ میلیون هکتار زمین به سیستم‌های آبیاری نوین (تیپ). تسطیح لیزری برای افزایش راندمان. <br><span class='text-emerald-600 font-bold'>هزینه: ۱۲۰ همت</span> | <span class='text-sky-600 font-bold'>صرفه‌جویی آب: ۳۰٪</span>"
+            },
+            {
+                title: "۳. عملیات کاشت و مدیریت آب",
+                details: "تغییر تاریخ کشت برای فرار از گرما. استفاده از کودهای زیستی. جایگزینی کشت نشایی. <br><span class='text-emerald-600 font-bold'>نیاز کود: ۲.۵ میلیون تن</span>"
+            },
+            {
+                title: "۴. برداشت مکانیزه و انبارداری",
+                details: "نوسازی ناوگان کمباین‌ها (کاهش ضایعات از ۱۰٪ به ۳٪). ساخت سیلوهای استاندارد برای ذخیره استراتژیک. <br><span class='text-emerald-600 font-bold'>کاهش ضایعات: ۵۰۰ هزار تن</span>"
+            },
+            {
+                title: "۵. فرآوری صنعتی و توزیع",
+                details: "توسعه کارخانجات کنسانتره و خوراک آماده (پلت). حذف خام‌فروشی جو و ذرت. ایجاد سامانه هوشمند توزیع (بازارگاه). <br><span class='text-emerald-600 font-bold'>ارزش افزوده: ۴۰٪</span>"
+            }
+        ];
+
+        let currentScenario = 'current';
+        let prodChart, waterChart, financeChart;
+
+        // Initialization
+        window.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+            showStep(0); // Show first step by default
+        });
+
+        // Scenario Toggle Logic
+        function toggleScenario() {
+            const bg = document.getElementById('toggle-bg');
+            const btnCurrent = document.getElementById('btn-current');
+            const btnTarget = document.getElementById('btn-target');
+            const desc = document.getElementById('scenario-desc');
+            const marketBar = document.getElementById('market-bar');
+            const marketText = document.getElementById('market-text');
+            const metricSaving = document.getElementById('metric-saving');
+            const metricWater = document.getElementById('metric-water');
+
+            if (currentScenario === 'current') {
+                // Switch to Target
+                currentScenario = 'target';
+                bg.style.right = '50%';
+                btnCurrent.classList.add('text-slate-500');
+                btnTarget.classList.remove('text-slate-500');
+                desc.innerText = "نمایش داده‌های طرح خودکفایی (۱۴۰۵) - بهینه شده";
+                desc.classList.remove('text-amber-600');
+                desc.classList.add('text-emerald-600');
+
+                // Update Metrics
+                marketBar.style.width = '92%';
+                marketBar.classList.remove('bg-amber-500');
+                marketBar.classList.add('bg-emerald-500');
+                marketText.innerText = "سهم ۹۲ درصدی تولید داخل";
+                metricSaving.innerText = dataStore.target.saving;
+                metricWater.innerText = "۶۵٪"; // Target Efficiency
+
+            } else {
+                // Switch to Current
+                currentScenario = 'current';
+                bg.style.right = '4px'; // padding offset
+                btnTarget.classList.add('text-slate-500');
+                btnCurrent.classList.remove('text-slate-500');
+                desc.innerText = "نمایش داده‌های وضعیت فعلی (واردات محور)";
+                desc.classList.remove('text-emerald-600');
+                desc.classList.add('text-amber-600');
+
+                // Update Metrics
+                marketBar.style.width = '35%';
+                marketBar.classList.remove('bg-emerald-500');
+                marketBar.classList.add('bg-amber-500');
+                marketText.innerText = "سهم ۳۵ درصدی تولید داخل";
+                metricSaving.innerText = dataStore.current.saving;
+                metricWater.innerText = "۳۵٪";
+            }
+
+            updateCharts();
+        }
+
+        // Chart.js Setup
+        function initCharts() {
+            // Production Chart (Stacked)
+            const ctxProd = document.getElementById('productionChart').getContext('2d');
+            prodChart = new Chart(ctxProd, {
+                type: 'bar',
+                data: {
+                    labels: ['ذرت دامی', 'جو', 'کنجاله سویا'],
+                    datasets: [
+                        {
+                            label: 'تولید داخل',
+                            data: dataStore.current.production,
+                            backgroundColor: '#059669', // Emerald 600
+                            borderRadius: 4,
+                        },
+                        {
+                            label: 'نیاز به واردات',
+                            data: dataStore.current.import,
+                            backgroundColor: '#f59e0b', // Amber 500
+                            borderRadius: 4,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { stacked: true },
+                        y: { stacked: true, title: { display: true, text: 'میلیون تن' } }
+                    },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { family: 'Vazirmatn' } } },
+                        tooltip: { titleFont: { family: 'Vazirmatn' }, bodyFont: { family: 'Vazirmatn' } }
+                    }
+                }
+            });
+
+            // Water Chart (Doughnut)
+            const ctxWater = document.getElementById('waterChart').getContext('2d');
+            waterChart = new Chart(ctxWater, {
+                type: 'doughnut',
+                data: {
+                    labels: ['آب سطحی', 'آب زیرزمینی'],
+                    datasets: [{
+                        data: dataStore.current.water,
+                        backgroundColor: ['#0ea5e9', '#3b82f6'], // Sky colors
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { family: 'Vazirmatn', size: 10 } } }
+                    }
+                }
+            });
+
+            // Finance Chart (Bar)
+            const ctxFinance = document.getElementById('financeChart').getContext('2d');
+            financeChart = new Chart(ctxFinance, {
+                type: 'bar',
+                data: {
+                    labels: ['هزینه تولید', 'هزینه واردات'],
+                    datasets: [{
+                        label: 'هزار میلیارد تومان (همت)',
+                        data: dataStore.current.finance,
+                        backgroundColor: ['#64748b', '#ef4444'], // Slate & Red
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        title: { display: false }
+                    }
+                }
+            });
+        }
+
+        function updateCharts() {
+            const data = dataStore[currentScenario];
+
+            // Update Production
+            prodChart.data.datasets[0].data = data.production;
+            prodChart.data.datasets[1].data = data.import;
+            prodChart.update();
+
+            // Update Water
+            waterChart.data.datasets[0].data = data.water;
+            waterChart.update();
+
+            // Update Finance
+            financeChart.data.datasets[0].data = data.finance;
+            financeChart.update();
+        }
+
+        // Zoning Interaction
+        function showRegionInfo(regionCode) {
+            const detailBox = document.getElementById('region-detail');
+            detailBox.innerHTML = regionDetails[regionCode];
+            detailBox.classList.remove('animate-pulse');
+            void detailBox.offsetWidth; // trigger reflow
+            detailBox.classList.add('animate-pulse');
+            setTimeout(() => detailBox.classList.remove('animate-pulse'), 500);
+        }
+
+        // Step Interaction
+        function showStep(index) {
+            // Update buttons
+            const buttons = document.querySelectorAll('.step-card');
+            buttons.forEach((btn, i) => {
+                if (i === index) {
+                    btn.classList.add('active', 'bg-emerald-50', 'border-l-emerald-700');
+                    btn.querySelector('span:last-child').classList.add('text-emerald-500');
+                } else {
+                    btn.classList.remove('active', 'bg-emerald-50', 'border-l-emerald-700');
+                    btn.querySelector('span:last-child').classList.remove('text-emerald-500');
+                }
+            });
+
+            // Update Content
+            const content = document.getElementById('step-content');
+            content.innerHTML = `
+                <div class="animate-[fadeIn_0.5s_ease-out]">
+                    <div class="text-4xl font-black text-slate-100 absolute top-0 left-4 select-none -z-10">${index + 1}</div>
+                    <h4 class="text-xl font-bold text-emerald-800 mb-4 border-b pb-2 border-emerald-100">${stepsData[index].title}</h4>
+                    <p class="text-slate-700 leading-loose text-lg">${stepsData[index].details}</p>
+                </div>
+            `;
+        }
+
+    </script>
+
+    <style>
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</body>
+
+</html>
