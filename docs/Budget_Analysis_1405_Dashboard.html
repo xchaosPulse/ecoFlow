@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تحلیل بودجه ۱۴۰۵: اصلاح نرخ ارز ترجیحی</title>
+    <meta property="og:title" content="تحلیل بودجه ۱۴۰۵: اصلاح نرخ ارز ترجیحی">
+    <meta property="og:description" content="داشبورد تعاملی برای شفاف‌سازی درآمد حاصل از «اصلاح نرخ ارز ترجیحی»، محاسبه سهم سرانه هر ایرانی، و مقایسه آن با بودجه‌های حمایتی بخش سلامت.">
+    <meta property="og:image" content="https://raw.githubusercontent.com/scaleopshub/ecoflow/main/docs/assets/social_preview.png">
+    <meta property="og:url" content="https://scaleopshub.github.io/ecoflow/docs/Budget_Analysis_1405_Dashboard.html">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="تحلیل بودجه ۱۴۰۵: اصلاح نرخ ارز ترجیحی">
+    <meta name="twitter:description" content="داشبورد تعاملی برای شفاف‌سازی درآمد حاصل از «اصلاح نرخ ارز ترجیحی»، محاسبه سهم سرانه هر ایرانی، و مقایسه آن با بودجه‌های حمایتی بخش سلامت.">
+    <meta name="twitter:image" content="https://raw.githubusercontent.com/scaleopshub/ecoflow/main/docs/assets/social_preview.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;700&display=swap');
+
+        body {
+            font-family: 'Vazirmatn', 'Tahoma', 'Segoe UI', sans-serif;
+            background-color: #f8fafc;
+            /* Slate 50 */
+            color: #1e293b;
+            /* Slate 800 */
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 300px;
+            max-height: 350px;
+        }
+
+        /* Custom scrollbar for cleaner look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+    <!-- Chosen Palette: Warm Neutrals & Professional Accents (Slate background, Emerald for income, Blue for health, Amber for highlights) -->
+    <!-- Application Structure Plan:
+         1. Hero Section: Title and core purpose.
+         2. KPI Cards (Key Metrics): Immediate visualization of the 3 main numbers (Total Income, Per Capita, Health Budget).
+         3. Interactive Analysis Section:
+            - Left: Chart showing the scale of Health vs. General Reform budgets.
+            - Right: Interactive 'Per Capita' calculator/explainer allowing users to toggle population assumptions.
+         4. Flow Logic Section: Explaining the 'Collective-Expenditure' (Income-Expense) concept using a flow diagram metaphor with text and icons.
+         5. Detailed Insights: Accordion/Cards for qualitative analysis (Health Priority, Purchasing Power).
+         6. Footer: Sources.
+         Rationale: This structure breaks down complex budget tables into digestible 'bite-sized' metrics, then allows comparison, and finally deep-dives into the implications.
+    -->
+    <!-- Visualization & Content Choices:
+         - KPI Cards: HTML/Tailwind. Goal: Instant context.
+         - Comparative Bar/Pie Chart: Chart.js. Goal: Compare the 57.2 Hemmat (General) vs 85 Hemmat (Health) to show prioritization.
+         - Per Capita Calculator: JS + HTML inputs. Goal: Make the "56,000 Tomans" figure tangible and show sensitivity to population count.
+         - Income-Expense Flow: Styled HTML/CSS cards with arrows. Goal: Explain 'Collective-Expenditure' without complex flowcharts.
+         - NO SVG/Mermaid: All visuals are CSS shapes, Unicode, or Chart.js canvas.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</head>
+
+<body class="bg-slate-50 min-h-screen flex flex-col">
+
+    <!-- Navbar / Header -->
+    <header class="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div>
+                <h1 class="text-xl md:text-2xl font-bold text-slate-800">تحلیل بودجه ۱۴۰۵</h1>
+                <p class="text-xs md:text-sm text-slate-500 mt-1">اصلاح نرخ ارز ترجیحی و اثرات آن</p>
+            </div>
+            <div class="text-left">
+                <span
+                    class="inline-block bg-slate-100 text-slate-600 text-xs px-2 py-1 rounded border border-slate-300">منبع:
+                    لایحه بودجه ۱۴۰۵</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-6xl mx-auto w-full px-4 py-8 space-y-12">
+
+        <!-- Intro Text -->
+        <section>
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <h2 class="text-lg font-bold text-slate-800 mb-3 border-r-4 border-emerald-500 pr-3">نمای کلی گزارش</h2>
+                <p class="text-slate-600 leading-relaxed text-justify">
+                    این داشبورد تعاملی بر اساس ارقام مندرج در <strong>جدول شماره ۱۴ (منابع و مصارف هدفمندسازی
+                        یارانه‌ها)</strong> لایحه بودجه سال ۱۴۰۵ طراحی شده است. هدف آن شفاف‌سازی درآمد حاصل از «اصلاح
+                    نرخ ارز ترجیحی»، محاسبه سهم سرانه هر ایرانی، و مقایسه آن با بودجه‌های حمایتی بخش سلامت است. ارقام به
+                    «هزار میلیارد تومان» (همت) یا «ریال» بیان شده‌اند.
+                </p>
+            </div>
+        </section>
+
+        <!-- KPI Section: The Big Numbers -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Card 1: Total Revenue -->
+            <div
+                class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow relative overflow-hidden group">
+                <div class="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
+                <h3 class="text-slate-500 text-sm font-medium mb-1">کل درآمد سالانه (اصلاح ارز)</h3>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-3xl font-bold text-slate-800">۵۷.۲</span>
+                    <span class="text-sm text-slate-600">هزار میلیارد تومان</span>
+                </div>
+                <p class="text-xs text-slate-400 mt-3">معادل ۵،۷۲۰،۰۰۰ میلیارد ریال (ردیف ۱۲ منابع)</p>
+            </div>
+
+            <!-- Card 2: Per Capita -->
+            <div
+                class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-1 h-full bg-amber-500"></div>
+                <h3 class="text-slate-500 text-sm font-medium mb-1">سرانه ماهانه هر فرد</h3>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-3xl font-bold text-slate-800">۵۶</span>
+                    <span class="text-sm text-slate-600">هزار تومان</span>
+                </div>
+                <p class="text-xs text-slate-400 mt-3">محاسبه بر اساس جمعیت ۸۵ میلیون نفر</p>
+            </div>
+
+            <!-- Card 3: Health Support -->
+            <div
+                class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
+                <h3 class="text-slate-500 text-sm font-medium mb-1">حمایت از دارو و سلامت</h3>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-3xl font-bold text-slate-800">۸۵</span>
+                    <span class="text-sm text-slate-600">هزار میلیارد تومان</span>
+                </div>
+                <p class="text-xs text-slate-400 mt-3">یارانه دارو و شیرخشک (ردیف ۶ مصارف)</p>
+            </div>
+        </section>
+
+        <!-- Analysis Section: Chart & Calculator -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+            <!-- Visualization: Comparison -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col">
+                <div class="mb-4">
+                    <h3 class="text-lg font-bold text-slate-800 mb-2">مقایسه منابع و مصارف حمایتی</h3>
+                    <p class="text-sm text-slate-500">
+                        در این نمودار، حجم درآمد حاصل از اصلاح ارز ترجیحی (که صرف جبران قیمت کالاهای اساسی می‌شود) با
+                        بودجه جداگانه حمایت از دارو مقایسه شده است.
+                    </p>
+                </div>
+                <!-- Chart Container -->
+                <div class="chart-container mx-auto">
+                    <canvas id="budgetComparisonChart"></canvas>
+                </div>
+                <div class="mt-4 bg-blue-50 p-3 rounded text-xs text-blue-800 leading-relaxed border border-blue-100">
+                    <strong>نکته تحلیلی:</strong> دولت علاوه بر درآمد ۵۷.۲ همتی اصلاح ارز، مبلغ ۸۵ همت (حدود ۱.۵ برابر)
+                    را صرفاً برای جلوگیری از افزایش قیمت دارو و تجهیزات پزشکی اختصاص داده است.
+                </div>
+            </div>
+
+            <!-- Interactive: Per Capita Calculator -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                <div>
+                    <h3 class="text-lg font-bold text-slate-800 mb-2">ماشین‌حساب سرانه یارانه</h3>
+                    <p class="text-sm text-slate-500 mb-6">
+                        سهم هر ایرانی از درآمد ۵۷.۲ هزار میلیارد تومانی چقدر است؟ با تغییر جمعیت، تغییرات جزئی سرانه را
+                        مشاهده کنید.
+                    </p>
+
+                    <!-- Input Controls -->
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">
+                                جمعیت کشور (میلیون نفر): <span id="populationDisplay"
+                                    class="font-bold text-emerald-600">85</span>
+                            </label>
+                            <input type="range" id="populationInput" min="75" max="95" step="1" value="85"
+                                class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-500">
+                            <div class="flex justify-between text-xs text-slate-400 mt-1">
+                                <span>۷۵ میلیون</span>
+                                <span>۹۵ میلیون</span>
+                            </div>
+                        </div>
+
+                        <!-- Result Box -->
+                        <div
+                            class="bg-slate-50 border border-slate-200 rounded-lg p-5 text-center transition-all duration-300 hover:border-emerald-300">
+                            <p class="text-slate-500 text-sm mb-1">سرانه ماهانه هر فرد</p>
+                            <div class="flex items-center justify-center gap-2 text-emerald-600">
+                                <span id="perCapitaResult" class="text-4xl font-bold">56,078</span>
+                                <span class="text-lg">تومان</span>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-2">
+                                (درآمد کل سالانه ÷ جمعیت ÷ ۱۲ ماه)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 border-t border-slate-100 pt-4">
+                    <p class="text-xs text-slate-500 leading-relaxed text-justify">
+                        <span class="inline-block w-2 h-2 bg-amber-500 rounded-full ml-1"></span>
+                        توجه: این مبلغ به صورت یارانه نقدی مستقیم پرداخت نمی‌شود، بلکه طبق جداول بودجه (جمعی-خرجی) صرف
+                        جبران مابه‌التفاوت قیمت‌ها در زنجیره تأمین کالا می‌شود.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Logic Flow: Income-Expense Concept -->
+        <section>
+            <div class="mb-4">
+                <h3 class="text-lg font-bold text-slate-800 border-r-4 border-amber-500 pr-3">مفهوم «جمعی-خرجی» در بودجه
+                </h3>
+                <p class="text-sm text-slate-600 mt-2">
+                    این درآمد چگونه مدیریت می‌شود؟ طبق تبصره‌ها، دولت درآمد حاصله را عیناً برای هزینه همان بخش مصرف
+                    می‌کند.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
+                <!-- Step 1 -->
+                <div class="bg-white border-l-4 border-emerald-500 p-5 rounded shadow-sm flex flex-col gap-2">
+                    <div class="flex justify-between items-start">
+                        <span class="text-xs font-bold bg-emerald-100 text-emerald-700 px-2 py-1 rounded">منابع
+                            (ورودی)</span>
+                        <span class="text-xl">📥</span>
+                    </div>
+                    <h4 class="font-bold text-slate-700">اصلاح نرخ ارز</h4>
+                    <p class="text-sm text-slate-500">کسب درآمد ۵۷۲ هزار میلیارد ریالی از محل تغییر نرخ ارز ترجیحی.</p>
+                </div>
+
+                <!-- Step 2 (Arrow for Desktop) -->
+                <div class="hidden md:flex flex-col items-center justify-center text-slate-300">
+                    <span class="text-4xl">➔</span>
+                    <span class="text-xs font-medium">تخصیص ۱۰۰٪</span>
+                </div>
+                <!-- Arrow for Mobile -->
+                <div class="md:hidden flex justify-center text-slate-300 py-2">
+                    <span class="text-2xl">⬇</span>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="bg-white border-l-4 border-red-400 p-5 rounded shadow-sm flex flex-col gap-2">
+                    <div class="flex justify-between items-start">
+                        <span class="text-xs font-bold bg-red-100 text-red-700 px-2 py-1 rounded">مصارف (خروجی)</span>
+                        <span class="text-xl">📤</span>
+                    </div>
+                    <h4 class="font-bold text-slate-700">جبران هزینه‌ها</h4>
+                    <p class="text-sm text-slate-500">پرداخت ۵۷۲ هزار میلیارد ریال بابت مابه‌التفاوت نرخ ارز برای
+                        جلوگیری از گرانی.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Detailed Breakdown -->
+        <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-4 bg-slate-50 border-b border-slate-200">
+                <h3 class="font-bold text-slate-700">جزئیات و نکات تکمیلی لایحه</h3>
+            </div>
+            <div class="divide-y divide-slate-100">
+                <div class="p-4 hover:bg-slate-50 transition-colors cursor-default">
+                    <h4 class="font-bold text-sm text-slate-800 mb-1">🔍 ثبات قدرت خرید</h4>
+                    <p class="text-sm text-slate-600 text-justify">
+                        عدد ۵۶ هزار تومان در ماه به ازای هر نفر، نشان‌دهنده میزان حمایتی است که دولت سعی دارد از طریق
+                        کنترل قیمت‌ها (نه پرداخت نقدی) به سفره خانوار تزریق کند.
+                    </p>
+                </div>
+                <div class="p-4 hover:bg-slate-50 transition-colors cursor-default">
+                    <h4 class="font-bold text-sm text-slate-800 mb-1">💊 اولویت ویژه سلامت</h4>
+                    <p class="text-sm text-slate-600 text-justify">
+                        بودجه دارو (۸۵ همت) کاملاً جدا از درآمد اصلاح نرخ ارز کالاهای اساسی (۵۷.۲ همت) است. این نشان
+                        می‌دهد که حساسیت دولت روی هزینه‌های درمان بسیار بالاتر از سایر بخش‌هاست.
+                    </p>
+                </div>
+                <div class="p-4 hover:bg-slate-50 transition-colors cursor-default">
+                    <h4 class="font-bold text-sm text-slate-800 mb-1">⚠️ ریسک تحقق منابع</h4>
+                    <p class="text-sm text-slate-600 text-justify">
+                        از آنجا که این درآمد وابسته به نرخ ارز است، نوسانات بازار ارز می‌تواند مستقیماً روی این ردیف
+                        بودجه اثر بگذارد. اگر نرخ ارز تغییر کند، هم درآمد و هم هزینه مابه‌التفاوت تغییر خواهد کرد.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-slate-800 text-slate-300 py-8 mt-auto">
+        <div class="max-w-6xl mx-auto px-4 text-center space-y-2">
+            <p class="text-sm">طراحی شده برای تحلیل لایحه بودجه ۱۴۰۵</p>
+            <p class="text-xs text-slate-500">منابع داده‌ها: جداول پیوست هدفمندسازی یارانه‌ها (صفحات ۷۴۵، ۷۴۷، ۷۴۸ و
+                ۷۵۱)</p>
+        </div>
+    </footer>
+
+    <script>
+        // --- State Management ---
+        const budgetData = {
+            totalRevenue: 57200000000000, // 57.2 Hemmat in Tomans (approx calculation base)
+            healthBudget: 85000000000000, // 85 Hemmat
+            basePopulation: 85000000,
+
+            // Format helpers
+            formatCurrency: (num) => {
+                return new Intl.NumberFormat('fa-IR').format(Math.round(num));
+            }
+        };
+
+        // --- DOM Elements ---
+        const popInput = document.getElementById('populationInput');
+        const popDisplay = document.getElementById('populationDisplay');
+        const perCapitaDisplay = document.getElementById('perCapitaResult');
+
+        // --- Logic: Calculator ---
+        function updateCalculator() {
+            const population = parseInt(popInput.value) * 1000000; // Convert millions to actual
+
+            // 57.2 Thousand Billion Tomans = 57,200,000,000,000 Tomans
+            // But wait, source says 572,000 Billion Rials = 57,200 Billion Tomans.
+            // Let's stick to the source math:
+            // Total Annual Income Rials: 572,000,000,000,000
+            // Monthly Rials: 47,666,666,666,666
+            // Monthly Tomans: 4,766,666,666,666
+
+            const totalAnnualTomans = 57200000000000;
+            const monthlyTomans = totalAnnualTomans / 12;
+            const perCapita = monthlyTomans / population;
+
+            // Update UI
+            popDisplay.textContent = new Intl.NumberFormat('fa-IR').format(popInput.value);
+            perCapitaDisplay.textContent = budgetData.formatCurrency(perCapita);
+        }
+
+        // Event Listener for Slider
+        popInput.addEventListener('input', updateCalculator);
+
+        // --- Logic: Charts ---
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // Initial calc
+            updateCalculator();
+
+            // Chart: Budget Comparison
+            const ctx = document.getElementById('budgetComparisonChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['اصلاح ارز کالاهای اساسی', 'حمایت از دارو و سلامت'],
+                    datasets: [{
+                        label: 'مبلغ (هزار میلیارد تومان)',
+                        data: [57.2, 85],
+                        backgroundColor: [
+                            'rgba(16, 185, 129, 0.7)', // Emerald for General
+                            'rgba(59, 130, 246, 0.7)'  // Blue for Health
+                        ],
+                        borderColor: [
+                            'rgb(16, 185, 129)',
+                            'rgb(59, 130, 246)'
+                        ],
+                        borderWidth: 1,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            titleFont: { family: 'Vazirmatn' },
+                            bodyFont: { family: 'Vazirmatn' },
+                            callbacks: {
+                                label: function (context) {
+                                    return context.raw + ' هزار میلیارد تومان';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: '#f1f5f9'
+                            },
+                            ticks: {
+                                font: { family: 'Vazirmatn' }
+                            },
+                            title: {
+                                display: true,
+                                text: 'هزار میلیارد تومان',
+                                font: { family: 'Vazirmatn' }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: { family: 'Vazirmatn', size: 12 }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+
+    </script>
+</body>
+
+</html>
