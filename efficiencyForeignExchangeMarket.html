@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>شاخص رشد نسبی دلار در دولت‌ها - نسخه اصلاح شده</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100;400;700&display=swap');
+
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+    </style>
+</head>
+
+<body class="p-4 md:p-8 text-right">
+
+    <div class="max-w-6xl mx-auto bg-white p-6 rounded-3xl shadow-2xl border border-gray-100">
+        <div class="mb-8 text-center border-b pb-6">
+            <h1 class="text-2xl md:text-3xl font-bold text-slate-800 mb-2">شاخص مقایسه‌ای کارایی در مهار رشد دلار (بازار
+                آزاد)</h1>
+            <p class="text-slate-500 italic text-sm md:text-base underline decoration-blue-200">استناد صرف به نرخ بازار
+                آزاد (غیررسمی) - به‌روزرسانی شده در دی ۱۴۰۴</p>
+        </div>
+
+        <!-- Chart Section -->
+        <div class="relative h-[400px] md:h-[550px] mb-8 bg-slate-50 p-4 rounded-2xl">
+            <canvas id="performanceChart"></canvas>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10" id="rankingGrid">
+            <!-- Ranking cards will be injected here -->
+        </div>
+
+        <!-- Data Table Section -->
+        <div class="mb-10">
+            <h3 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                جدول داده‌های تدقیق شده (نرخ واقعی بازار آزاد)
+            </h3>
+            <div class="table-container bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                <table class="w-full text-right border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-700 text-sm">
+                            <th class="p-4 font-bold border-l">رئیس‌جمهور</th>
+                            <th class="p-4 font-bold text-center border-l">بازه زمانی</th>
+                            <th class="p-4 font-bold border-l">نرخ شروع (تومان)</th>
+                            <th class="p-4 font-bold border-l">نرخ پایان (تومان)</th>
+                            <th class="p-4 font-bold text-center">ضریب افزایش</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataTableBody" class="text-slate-700 text-sm">
+                        <!-- Table rows will be injected here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Footer Analysis -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="md:col-span-2 p-5 bg-blue-50 border-r-4 border-blue-500 rounded-l-xl">
+                <h4 class="font-bold text-blue-800 mb-2">توضیح شاخص ۱۰۰:</h4>
+                <p class="text-sm text-blue-900 leading-relaxed">
+                    در این نمودار، قیمت دلار در شروع هر دولت معادل <strong>۱۰۰ واحد</strong> فرض شده است. اگر عدد نهایی
+                    دولتی <strong>۸۷۰</strong> باشد، به این معناست که در آن دوره، قیمت دلار <strong>۸.۷ برابر</strong>
+                    شده است. این متدولوژی اجازه می‌دهد کارایی دولت‌ها را بدون توجه به رقم خام تومان با یکدیگر مقایسه
+                    کنیم.
+                </p>
+            </div>
+            <div
+                class="p-5 bg-rose-50 border-r-4 border-rose-500 rounded-l-xl text-sm text-rose-900 flex flex-col justify-center">
+                <strong>هشدار داده‌ها:</strong> نرخ‌های دولتی (مانند ۴۲۰۰ یا ۲۸۵۰۰) در این تحلیل <u>هیچ جایگاهی
+                    ندارند</u> و تمام اعداد بر اساس معاملات کف بازار استخراج شده‌اند.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Updated Data based on deep dive (Market Rates only)
+        const presidentsData = [
+            { name: 'موسوی (جنگ)', period: '۱۳۶۰-۱۳۶۸', start: 27, end: 120, color: '#64748b', normalized: [100, 140, 180, 220, 280, 320, 380, 444] },
+            { name: 'هاشمی (سازندگی)', period: '۱۳۶۸-۱۳۷۶', start: 120, end: 478, color: '#f59e0b', normalized: [100, 115, 140, 160, 210, 300, 350, 398] },
+            { name: 'خاتمی (اصلاحات)', period: '۱۳۷۶-۱۳۸۴', start: 478, end: 904, color: '#10b981', normalized: [100, 110, 125, 135, 145, 160, 175, 189] },
+            { name: 'احمدی‌نژاد (عدالت)', period: '۱۳۸۴-۱۳۹۲', start: 904, end: 3260, color: '#f43f5e', normalized: [100, 102, 105, 110, 115, 140, 240, 360] },
+            { name: 'روحانی (اعتدال)', period: '۱۳۹۲-۱۴۰۰', start: 3260, end: 25300, color: '#3b82f6', normalized: [100, 100, 105, 115, 130, 350, 550, 776] },
+            { name: 'رئیسی (ناتمام)', period: '۱۴۰۰-۱۴۰۳', start: 25300, end: 61000, color: '#8b5cf6', normalized: [100, 115, 180, 241] },
+            { name: 'پزشکیان (تا امروز)', period: '۱۴۰۳-۱۴۰۴', start: 61000, end: 88500, color: '#06b6d4', normalized: [100, 125, 145] }
+        ];
+
+        const ctx = document.getElementById('performanceChart').getContext('2d');
+        const xLabels = Array.from({ length: 8 }, (_, i) => `سال ${i + 1}`);
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: xLabels,
+                datasets: presidentsData.map(ds => ({
+                    label: ds.name,
+                    data: ds.normalized,
+                    borderColor: ds.color,
+                    backgroundColor: ds.color + '10',
+                    borderWidth: 4,
+                    pointRadius: 5,
+                    pointHoverRadius: 8,
+                    tension: 0.3,
+                    fill: false
+                }))
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                scales: {
+                    y: {
+                        position: 'right',
+                        title: { display: true, text: 'ضریب افزایش (شروع=۱۰۰)', font: { family: 'Vazirmatn', weight: 'bold' } },
+                        ticks: { font: { family: 'Vazirmatn' } },
+                        grid: { color: '#e2e8f0' }
+                    },
+                    x: {
+                        ticks: { font: { family: 'Vazirmatn' } },
+                        grid: { display: false }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        rtl: true,
+                        labels: { font: { family: 'Vazirmatn', size: 13 }, usePointStyle: true, boxWidth: 6 }
+                    },
+                    tooltip: {
+                        rtl: true,
+                        titleFont: { family: 'Vazirmatn', size: 14 },
+                        bodyFont: { family: 'Vazirmatn', size: 13 },
+                        padding: 12,
+                        cornerRadius: 10
+                    }
+                }
+            }
+        });
+
+        const rankingGrid = document.getElementById('rankingGrid');
+        const tableBody = document.getElementById('dataTableBody');
+
+        presidentsData.forEach(p => {
+            const growthPercent = (((p.end - p.start) / p.start) * 100).toFixed(0);
+            const multiplier = (p.end / p.start).toFixed(1);
+
+            // Cards
+            rankingGrid.innerHTML += `
+            <div class="bg-white border border-slate-100 p-4 rounded-2xl shadow-sm border-b-4" style="border-bottom-color: ${p.color}">
+                <div class="flex justify-between items-start mb-2">
+                    <span class="font-bold text-slate-800 text-sm">${p.name}</span>
+                    <span class="text-[10px] text-slate-400 font-mono">${p.period}</span>
+                </div>
+                <div class="text-2xl font-black text-slate-900">${multiplier} <span class="text-xs font-normal text-slate-500">برابر شده</span></div>
+                <div class="mt-2 text-xs font-bold" style="color: ${p.color}">${growthPercent}% رشد کل</div>
+            </div>
+        `;
+
+            // Table Rows
+            tableBody.innerHTML += `
+            <tr class="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                <td class="p-4 font-bold border-l">${p.name}</td>
+                <td class="p-4 text-center text-xs text-slate-500 font-mono border-l">${p.period}</td>
+                <td class="p-4 font-semibold border-l">${p.start.toLocaleString()}</td>
+                <td class="p-4 font-semibold border-l text-blue-700">${p.end.toLocaleString()}</td>
+                <td class="p-4 text-center">
+                    <span class="px-3 py-1 rounded-full text-xs font-bold ${growthPercent > 300 ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}">
+                        ${multiplier}x
+                    </span>
+                </td>
+            </tr>
+        `;
+        });
+    </script>
+
+</body>
+
+</html>
